@@ -1,0 +1,22 @@
+# Node
+node_modules/
+.pnpm-debug.log*
+dist/
+.env.local
+
+# Java
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.iml
+
+# OS
+.DS_Store
+__MACOSX/
