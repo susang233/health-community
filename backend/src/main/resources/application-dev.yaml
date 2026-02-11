@@ -1,0 +1,55 @@
+# ========================
+# 开发环境配置
+# ========================
+
+spring:
+  # 数据源（H2 内存数据库）
+  datasource:
+    url: jdbc:h2:mem:community_dev;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: su
+    password: ""
+    driver-class-name: org.h2.Driver
+    hikari:
+      maximum-pool-size: 5
+      connection-timeout: 30000
+
+  # JPA
+  jpa:
+    hibernate:
+      ddl-auto: update  # 更新结构，保留数据
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+  # H2 Console（方便查看数据）
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+# 服务器
+server:
+  port: 8080
+  error:
+    include-stacktrace: always
+    include-message: always
+
+# 日志
+logging:
+  level:
+    root: info
+    com.health.community: debug
+    org.hibernate.SQL: debug
+    org.hibernate.type: trace
+    org.springframework.transaction: debug
+
+springdoc:
+  swagger-ui:
+    enabled: true
+
+jwt:
+  secret: devSecretKeyForLocalTesting1234567890  # 开发环境固定密钥
+  ttl: 86400000  # 24小时，方便调试
+  admin-id: "1"  # 开发环境管理员ID
+  admin-role: "admin"
