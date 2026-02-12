@@ -3,6 +3,7 @@ package com.health.community.common.util;
 import com.health.community.common.properties.JwtProperties;
 import com.health.community.common.result.JwtResult;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.SignatureException;
 
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -23,6 +24,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.health.community.common.constant.JwtClaimsConstant.*;
+
 /**
  * JWT工具类 - 支持多环境配置
  * 核心功能：生成和验证JWT令牌，区分开发/生产环境
@@ -35,18 +38,12 @@ public class JwtUtils {
 
     private SecretKey secretKey;
     private long ttl;
-    private String adminId;
-    private String adminRole;
+
     private boolean isProdEnv;
 
-    // Claims常量
-    private static final String CLAIM_USER_ID = "userId";
-    private static final String CLAIM_USER_ROLE = "role";
-    private static final String CLAIM_ENV = "env";
 
-    // 环境常量
-    private static final String ENV_PROD = "prod";
-    private static final String ENV_DEV = "dev";
+
+
 
     public JwtUtils(JwtProperties jwtProperties, Environment environment) {
         this.jwtProperties = jwtProperties;
@@ -75,9 +72,7 @@ public class JwtUtils {
         // 4. 设置过期时间
         this.ttl = jwtProperties.getTtl();
 
-        // 5. 管理员配置
-        this.adminId = jwtProperties.getAdminId();
-        this.adminRole = jwtProperties.getAdminRole();
+
 
         // 打印环境信息（便于调试）
         logEnvironmentInfo();
@@ -107,7 +102,7 @@ public class JwtUtils {
         log.info("========== JWT 环境配置 ==========");
         log.info("当前环境: " + (isProdEnv ? "生产环境" : "开发环境"));
         log.info("Token有效期: " + (ttl / 1000 / 60) + "分钟");
-        log.info("管理员ID: " + adminId);
+
         log.info("==================================");
     }
 
@@ -126,26 +121,22 @@ public class JwtUtils {
     }
 
     /**
-     * 生成普通用户Token
+     * 生成用户Token
      */
-    public String generateUserToken(Integer userId, String role) {
+    public String generateToken(Integer userId, String role) {
         Map<String, Object> claims = new HashMap<>();
+        if (userId == null) {
+            throw new IllegalArgumentException("用户ID不能为空");}
+        if (role == null || role.trim().isEmpty()) {
+            throw new IllegalArgumentException("用户角色不能为空");
+        }
         claims.put(CLAIM_USER_ID, userId);
         claims.put(CLAIM_USER_ROLE, role);
         claims.put(CLAIM_ENV, isProdEnv ? ENV_PROD : ENV_DEV); // 标记环境
         return generateToken(claims, String.valueOf(userId));
     }
 
-    /**
-     * 生成管理员Token
-     */
-    public String generateAdminToken() {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put(CLAIM_USER_ID, adminId);
-        claims.put(CLAIM_USER_ROLE, adminRole);
-        claims.put(CLAIM_ENV, isProdEnv ? ENV_PROD : ENV_DEV);
-        return generateToken(claims, adminRole);
-    }
+
 
     /**
      * 通用Token生成方法
@@ -177,10 +168,7 @@ public class JwtUtils {
                 return result;
             }
 
-            // 移除Bearer前缀
-            if (token.startsWith("Bearer ")) {
-                token = token.substring(7);
-            }
+
 
             Jws<Claims> jws = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -189,12 +177,7 @@ public class JwtUtils {
 
             Claims claims = jws.getBody();
 
-            // 检查是否过期
-            if (claims.getExpiration().before(new Date())) {
-                result.setSuccess(false);
-                result.setErrMsg("Token已过期");
-                return result;
-            }
+
 
             // 【核心隔离】生产环境拒绝开发环境的Token
             if (isProdEnv) {
@@ -231,6 +214,7 @@ public class JwtUtils {
      * 简单的Token验证（返回布尔值）
      */
     public boolean validateTokenSimple(String token) {
+        if (token == null || token.trim().isEmpty()) return false;
         return validateToken(token).isSuccess();
     }
 
@@ -266,24 +250,7 @@ public class JwtUtils {
         return role != null ? role.toString() : null;
     }
 
-    /**
-     * 判断是否是管理员
-     */
-    public boolean isAdmin(Claims claims) {
-        if (claims == null) return false;
 
-        String userId = claims.get(CLAIM_USER_ID, String.class);
-        String role = claims.get(CLAIM_USER_ROLE, String.class);
-
-        return adminId.equals(userId) && adminRole.equals(role);
-    }
-
-    /**
-     * 判断是否是管理员ID
-     */
-    public boolean isAdminId(String userId) {
-        return adminId.equals(userId);
-    }
 
     /**
      * 获取当前环境
@@ -305,7 +272,9 @@ public class JwtUtils {
      * 从Request中提取Token
      */
     public String extractToken(HttpServletRequest request) {
-        String token = request.getHeader("token");
+
+        String token = request.getHeader(jwtProperties.getTokenHeader());
+
         if (token != null && token.startsWith("Bearer ")) {
             return token.substring(7);
         }
@@ -346,20 +315,5 @@ public class JwtUtils {
         return Optional.ofNullable(getUserRole(result.getClaims()));
     }
 
-    /**
-     * 从Request中判断是否是管理员
-     */
-    public boolean isAdminFromRequest(HttpServletRequest request) {
-        String token = extractToken(request);
-        if (token == null) {
-            return false;
-        }
 
-        JwtResult result = validateToken(token);
-        if (!result.isSuccess()) {
-            return false;
-        }
-
-        return isAdmin(result.getClaims());
-    }
 }

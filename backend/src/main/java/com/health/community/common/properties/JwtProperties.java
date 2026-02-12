@@ -14,14 +14,8 @@ import org.springframework.stereotype.Component;
 public class JwtProperties {
     private String secret;
     private long ttl;
-    /**
-     * 管理员ID（可配置，默认-1）
-     */
-    private String adminId = "-1";
 
-    /**
-     * 管理员角色名
-     */
-    private String adminRole = "admin";
+    private String tokenHeader = "authorization";
+
 
 }

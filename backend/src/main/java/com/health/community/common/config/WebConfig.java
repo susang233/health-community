@@ -4,17 +4,23 @@ import com.health.community.common.interceptor.LoginInterceptor;
 import com.health.community.common.properties.AppProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.List;
-
+@Configuration
 public class WebConfig implements WebMvcConfigurer {
     private final AppProperties appProperties;
-
-    public WebConfig(AppProperties appProperties) {
+    /**
+     * 注册登录拦截器 Bean
+     */
+    private final LoginInterceptor loginInterceptor; // ← 注入已存在的 Bean
+    // 构造函数注入（Spring 会自动传入已创建的 Bean）
+    public WebConfig(AppProperties appProperties, LoginInterceptor loginInterceptor) {
         this.appProperties = appProperties;
+        this.loginInterceptor = loginInterceptor; // ← 安全初始化
     }
 
     @Override
@@ -26,13 +32,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .maxAge(3600);
     }
-    /**
-     * 注册登录拦截器 Bean
-     */
-    @Bean
-    public LoginInterceptor loginInterceptor() {
-        return new LoginInterceptor();
-    }
+
+
     /**
      * 拦截器配置
      * - 拦截所有 请求（需要身份验证）
@@ -40,7 +41,7 @@ public class WebConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(loginInterceptor())
+        registry.addInterceptor(loginInterceptor)
                 .addPathPatterns("/**") // 拦截所有 API 请求
                 .excludePathPatterns(
                         "/admin/login",
