@@ -2,8 +2,6 @@ package com.health.community.common.config;
 
 import com.health.community.common.interceptor.LoginInterceptor;
 import com.health.community.common.properties.AppProperties;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -14,7 +12,7 @@ import java.util.List;
 public class WebConfig implements WebMvcConfigurer {
     private final AppProperties appProperties;
     /**
-     * 注册登录拦截器 Bean
+     * 注册登录拦截器
      */
     private final LoginInterceptor loginInterceptor; // ← 注入已存在的 Bean
     // 构造函数注入（Spring 会自动传入已创建的 Bean）

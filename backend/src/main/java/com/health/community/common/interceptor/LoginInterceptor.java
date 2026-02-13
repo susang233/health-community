@@ -9,6 +9,8 @@ import com.health.community.common.util.JwtUtils;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,16 +24,14 @@ import java.util.Arrays;
 /**
  * 登录拦截器 - 验证用户Token并设置上下文
  */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class LoginInterceptor implements HandlerInterceptor {
 
-    private static final Logger log = LoggerFactory.getLogger(LoginInterceptor.class);
+    private final JwtUtils jwtUtils;
+    private final ObjectMapper objectMapper;
 
-    @Autowired
-    private JwtUtils jwtUtils;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Override
     public boolean preHandle(HttpServletRequest request,
