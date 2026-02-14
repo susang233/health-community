@@ -50,4 +50,4 @@ springdoc:
 
 jwt:
   secret: devSecretKeyForLocalTesting1234567890  # 开发环境固定密钥
-  ttl: 86400000  # 24小时，方便调试
+

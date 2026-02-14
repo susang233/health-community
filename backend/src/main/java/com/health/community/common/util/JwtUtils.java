@@ -37,7 +37,8 @@ public class JwtUtils {
     private final Environment environment;
 
     private SecretKey secretKey;
-    private long ttl;
+    private long shortTtl;
+    private long longTtl;
 
     private boolean isProdEnv;
 
@@ -70,7 +71,8 @@ public class JwtUtils {
         this.secretKey = createSecretKey(secret);
 
         // 4. 设置过期时间
-        this.ttl = jwtProperties.getTtl();
+        this.shortTtl = jwtProperties.getShortTtl();
+        this.longTtl=jwtProperties.getLongTtl();
 
 
 
@@ -101,7 +103,8 @@ public class JwtUtils {
     private void logEnvironmentInfo() {
         log.info("========== JWT 环境配置 ==========");
         log.info("当前环境: " + (isProdEnv ? "生产环境" : "开发环境"));
-        log.info("Token有效期: " + (ttl / 1000 / 60) + "分钟");
+        log.info("短期Token有效期: {} 小时", shortTtl / 1000 / 3600);
+        log.info("长期Token有效期: {} 天", longTtl / 1000 / 3600 / 24);
 
         log.info("==================================");
     }
@@ -123,7 +126,7 @@ public class JwtUtils {
     /**
      * 生成用户Token
      */
-    public String generateToken(Integer userId, String role) {
+    public String generateToken(Integer userId, String role,boolean rememberMe) {
         Map<String, Object> claims = new HashMap<>();
         if (userId == null) {
             throw new IllegalArgumentException("用户ID不能为空");}
@@ -133,7 +136,7 @@ public class JwtUtils {
         claims.put(CLAIM_USER_ID, userId);
         claims.put(CLAIM_USER_ROLE, role);
         claims.put(CLAIM_ENV, isProdEnv ? ENV_PROD : ENV_DEV); // 标记环境
-        return generateToken(claims, String.valueOf(userId));
+        return generateToken(claims, String.valueOf(userId),rememberMe);
     }
 
 
@@ -141,16 +144,17 @@ public class JwtUtils {
     /**
      * 通用Token生成方法
      */
-    private String generateToken(Map<String, Object> claims, String subject) {
+    private String generateToken(Map<String, Object> claims, String subject,boolean rememberMe) {
         Object userIdObj = claims.get(CLAIM_USER_ID);
         String jwtId = userIdObj != null ? String.valueOf(userIdObj) : subject;
+        long expiration=rememberMe ? longTtl:shortTtl;
 
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setId(jwtId)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + ttl))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(secretKey)
                 .compact();
     }

@@ -35,3 +35,5 @@ app:
 
 jwt:
   token-header: authorization
+  short-ttl: 7200000
+  long-ttl: 2592000000

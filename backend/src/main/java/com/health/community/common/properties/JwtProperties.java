@@ -13,7 +13,8 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "jwt")
 public class JwtProperties {
     private String secret;
-    private long ttl;
+    private long shortTtl;
+    private long longTtl;
 
     private String tokenHeader = "authorization";
 

@@ -19,6 +19,7 @@ public class WebConfig implements WebMvcConfigurer {
     public WebConfig(AppProperties appProperties, LoginInterceptor loginInterceptor) {
         this.appProperties = appProperties;
         this.loginInterceptor = loginInterceptor; // ← 安全初始化
+        System.out.println("✅ WebConfig 已加载！");
     }
 
     @Override
@@ -44,7 +45,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/admin/login",
                         "/user/register",
-                        "/user/login"
+                        "/user/login",
+                        "/user/check-username"
                         // 示例：食物搜索可公开（如果不需要登录）
                         // 后续可在此添加更多公开接口
                 );

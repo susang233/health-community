@@ -4,6 +4,7 @@ import com.health.community.common.exception.BusinessException;
 import com.health.community.dto.RegisterDTO;
 import com.health.community.entity.User;
 import com.health.community.repository.UserRepository;
+import com.health.community.vo.LoginVO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -25,6 +26,7 @@ public class UserService {
 
     // 唯一性校验（供 check-username 接口调用）
     public boolean isUsernameExists(String username) {
+
         return userRepository.existsByUsername(username);
     }
     //初始昵称
@@ -44,8 +46,7 @@ public class UserService {
         user.setUsername(registerDTO.getUsername());
         userRepository.save(user);
         return user.getUsername();
-
-
-
     }
+
+
 }

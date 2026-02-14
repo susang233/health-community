@@ -14,4 +14,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     // 检查用户名是否存在
     boolean existsByUsername(String username);
+
+
+
 }

@@ -37,6 +37,8 @@ public class LoginInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request,
                              HttpServletResponse response,
                              Object handler) throws Exception {
+        String uri = request.getRequestURI();
+        log.info(">>> 拦截器收到请求 URI: {}", uri);
 
         // 1. 非Controller请求直接放行（静态资源等）
         if (!(handler instanceof HandlerMethod)) {

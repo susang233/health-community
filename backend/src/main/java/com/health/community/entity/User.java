@@ -13,7 +13,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user")
+@Table(name = "hc_user")
 @Data  // Getter/Setter/ToString/Equals/HashCode
 @NoArgsConstructor  // 无参构造
 @AllArgsConstructor // 全参构造

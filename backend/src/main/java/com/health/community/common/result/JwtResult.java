@@ -10,4 +10,5 @@ public class JwtResult {
     private String errMsg;        // 错误信息
 
 
+
 }
