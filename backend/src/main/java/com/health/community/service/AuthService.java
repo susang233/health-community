@@ -1,4 +1,5 @@
 package com.health.community.service;
+import com.health.community.common.enumeration.Role;
 import com.health.community.common.exception.BusinessException;
 import com.health.community.common.properties.JwtProperties;
 import com.health.community.common.util.JwtUtils;
@@ -33,13 +34,17 @@ public class AuthService {
      * @return 登录成功后的令牌和用户基本信息
      * @throws BusinessException 账号或密码错误
      */
-    public LoginVO login(LoginDTO loginDTO){
+    public LoginVO login(LoginDTO loginDTO, Role role){
 
         String username = loginDTO.getUsername();
         String password = loginDTO.getPassword();
         //1.查询用户是否存在
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BusinessException(ACCOUNT_OR_PASSWORD_ERROR));
+        //检查用户权限是否正确
+        if (role != user.getRole()) {
+            throw new BusinessException("账号角色不匹配");
+        }
 
      //2.比较账号密码对不对
 

@@ -1,8 +1,11 @@
 package com.health.community.controller.user;
 
+import com.health.community.common.enumeration.Role;
+import com.health.community.common.exception.BusinessException;
 import com.health.community.common.result.Result;
 import com.health.community.dto.LoginDTO;
 import com.health.community.dto.RegisterDTO;
+import com.health.community.service.AuthService;
 import com.health.community.service.UserService;
 import com.health.community.vo.LoginVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UserController{
     private final UserService userService;
+    private final AuthService authService;
 
     @GetMapping("/check-username")
     public  Result<Boolean> checkUsername(@Valid @RequestParam String username){
@@ -33,12 +37,12 @@ public class UserController{
         return Result.success(username);
 
     }
+    @Operation(
+            summary = "登录"
+    )
+    @PostMapping("/login")
+    public Result<LoginVO> login(@Valid @RequestBody LoginDTO loginDTO){
+        return Result.success(authService.login(loginDTO, Role.USER));
 
-//    @PostMapping("/login")
-//    public Result<LoginVO> login(@Valid @RequestBody LoginDTO loginDTO){
-//
-//
-//        return;
-//
-//    }
+    }
 }
