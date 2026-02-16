@@ -4,6 +4,7 @@ import com.health.community.common.enumeration.ActivityLevel;
 import com.health.community.common.enumeration.Gender;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
@@ -18,6 +19,7 @@ import java.time.Period;
 @Entity
 @Table(name = "hc_health_profile")
 @Data  // Getter/Setter/ToString/Equals/HashCode
+@Builder
 @NoArgsConstructor  // 无参构造
 @AllArgsConstructor // 全参构造
 @EntityListeners(AuditingEntityListener.class)
@@ -53,9 +55,13 @@ public class HealthProfile implements Serializable {
 
     @Column(nullable = false)
     private Double bmi;
+    @Column(nullable = false)
+    private Double bmr;
+    @Column(nullable = false)
+    private Integer tdee; //每日总消耗
 
     @Column(nullable = false)
-    private Integer recommendedCalories; // tted
+    private Integer recommendedCalories;
 
     @CreatedDate
     private LocalDateTime createTime;

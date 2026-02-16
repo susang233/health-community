@@ -1,38 +1,40 @@
 package com.health.community.dto;
 import com.health.community.common.enumeration.ActivityLevel;
 import com.health.community.common.enumeration.Gender;
-import jakarta.validation.constraints.NotBlank;;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDate;
 
 
-
-@Data  // Getter/Setter/ToString/Equals/HashCode
+@Data
 public class HealthProfileDTO implements Serializable {
 
     @NotBlank(message = "账号不能为空")
     private String username;
-    @NotBlank(message = "性别不能为空")
+
+    @NotNull(message = "性别不能为空")
     private Gender gender;
 
-    @NotBlank(message = "身高不能为空")
-    private Integer height; // cm
+    @NotNull(message = "身高不能为空")
+    @Min(value = 100, message = "身高不能小于100cm")
+    @Max(value = 230, message = "身高不能大于230cm")
+    private Integer height;
 
-    @NotBlank(message = "出生日期不能为空")
-    private LocalDate birthday; // Java 8+
+    @NotNull(message = "出生日期不能为空")
+    @Past(message = "出生日期必须是过去的时间")
+    private LocalDate birthday;
 
-    @NotBlank(message = "运动强度不能为空")
+    @NotNull(message = "运动强度不能为空")
     private ActivityLevel activityLevel;
 
-    @NotBlank(message = "体重不能为空")
-    private Double currentWeight; // kg
+    @NotNull(message = "体重不能为空")
+    @DecimalMin(value = "25.0", message = "体重不能小于25kg")
+    @DecimalMax(value = "200.0", message = "体重不能大于200kg")
+    private Double currentWeight;
 
-    @NotBlank(message = "目标体重不能为空")
-    private Double targetWeight; // kg
-
-
-
-
-
+    @NotNull(message = "目标体重不能为空")
+    @DecimalMin(value = "25.0", message = "目标体重不能小于25kg")
+    @DecimalMax(value = "200.0", message = "目标体重不能大于200kg")
+    private Double targetWeight;
 }

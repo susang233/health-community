@@ -18,4 +18,6 @@ public interface HealthProgileRepository extends JpaRepository<HealthProfile, In
 
 
 
+
+
 }

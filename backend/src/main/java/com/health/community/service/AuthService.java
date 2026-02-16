@@ -20,6 +20,7 @@ import static com.health.community.common.constant.MessageConstant.ACCOUNT_OR_PA
 @RequiredArgsConstructor // 自动生成构造器
 public class AuthService {
     private final UserRepository userRepository;
+
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
     private final JwtProperties jwtProperties;
@@ -67,6 +68,7 @@ public class AuthService {
                 .build();
 
     }
+
 
 
 }
