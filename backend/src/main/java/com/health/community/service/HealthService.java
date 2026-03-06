@@ -136,8 +136,8 @@ public class HealthService {
             existing.setCurrentWeight(currentWeight);
             existing.setTargetWeight(targetWeight);
             existing.setBmi(bmiRounded);
-            existing.setBmr(bmr);          // 如果 Entity 有 bmr 字段
-            existing.setTdee(tdee);  // 如果 Entity 有 tdee 字段
+            existing.setBmr(bmr);
+            existing.setTdee(tdee);
             existing.setRecommendedCalories(recommendedCalories);
 
             healthProgileRepository.save(existing); // JPA 会自动 update
