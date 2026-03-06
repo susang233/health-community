@@ -1,7 +1,23 @@
+// src/main.tsx
 import { createRoot } from 'react-dom/client';
-import { RouterProvider } from 'react-router-dom'; // 👈 新增
-import { router } from '@/router'; // 👈 导入你定义的路由
+import { RouterProvider } from 'react-router-dom';
+import { ConfigProvider } from 'antd'; // 👈 新增导入
+import { router } from '@/router';
+
+// 👇 定义你的绿色主题
+const theme = {
+  token: {
+    colorPrimary: '#52c41a', // 主色：Ant Design 官方绿色（健康、清新）
+    // 可选：微调其他设计变量
+    // borderRadius: 6,
+    // fontSize: 14,
+    // colorBgContainer: '#f8fff9',
+  },
+};
 
 createRoot(document.getElementById('root')!).render(
-  <RouterProvider router={router} /> // 👈 关键：用 RouterProvider 包裹
+  // 👇 先 ConfigProvider，再 RouterProvider
+  <ConfigProvider theme={theme}>
+    <RouterProvider router={router} />
+  </ConfigProvider>
 );

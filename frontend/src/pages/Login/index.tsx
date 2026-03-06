@@ -30,13 +30,15 @@ export default function LoginPage() {
     navigate('/dashboard', { replace: true });
   }
 }, [navigate]);
+
+
 // LoginPage.tsx
 
   const onFinish = async (values: LoginData) => {
     setLoading(true);
     try {
       const res = await login(values);
-      setToken(res.token, values.rememberMe); // 注意：如果用了拦截器改造，res 就是 data，不是 res.data
+      setToken(res.token,values.rememberMe); // 注意：如果用了拦截器改造，res 就是 data，不是 res.data
       message.success("登录成功！");
       navigate("/dashboard");
     } catch (error) {
@@ -89,7 +91,7 @@ export default function LoginPage() {
               htmlType="submit"
               block
               loading={loading}
-              style={{ height: 44, fontSize: 16 }}
+             
             >
               登录
             </Button>

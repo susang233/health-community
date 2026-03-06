@@ -20,3 +20,4 @@ export const login = (data: LoginData) =>
 
 export const register = (data: RegisterData) :Promise<string> =>
   api.post('/user/register', data);
+

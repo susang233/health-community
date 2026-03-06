@@ -1,7 +1,7 @@
 import { Row, Col, Card, Button } from 'antd';
 //src/pages/DashboardPage/index.tsx
 // 仪表盘内容组件
-export default function DashboardPage() {
+export default function WeightPage() {
   return (
     <div>
       <h2>欢迎回来！</h2>
