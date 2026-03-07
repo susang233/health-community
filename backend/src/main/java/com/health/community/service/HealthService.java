@@ -31,8 +31,12 @@ public class HealthService {
 
 
     //用于在未完善健康档案前对相关功能进行限制
-    public boolean isProfileCompleted(Integer userId) {
-        return healthProgileRepository.existsByUserId(userId);
+    public boolean isProfileCompleted(String username) {
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BusinessException(ACCOUNT_OR_PASSWORD_ERROR));
+        //使用userId再去查询
+        return healthProgileRepository.existsByUserId(user.getUserId());
     }
     private void validateHealthData(HealthProfileDTO dto) {
         // 1. 基本范围校验（和 DTO 重复，但为了安全）
@@ -57,6 +61,10 @@ public class HealthService {
     }
 
     public HealthProfileVO saveHealthProfile(@Valid HealthProfileDTO healthProfileDTO) {
+        //提取dto里的username，通过username在user里查询到userId
+        String username = healthProfileDTO.getUsername();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BusinessException(ACCOUNT_OR_PASSWORD_ERROR));
         //计算tdee 和bmi，bmr，推荐热量
         //bmi
         validateHealthData(healthProfileDTO);//校验参数合法性
@@ -114,10 +122,7 @@ public class HealthService {
 
 
 
-        //提取dto里的username，通过username在user里查询到userId
-        String username = healthProfileDTO.getUsername();
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new BusinessException(ACCOUNT_OR_PASSWORD_ERROR));
+
 
         //通过userId查询该用户是否有健康档案
 

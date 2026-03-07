@@ -10,6 +10,7 @@ import DashboardPage from '@/pages/DashboardPage'; // 仪表盘内容组件
 
 import DashboardLayout from '@/layouts/DashboardLayout';
 import WeightPage from '@/pages/Health/WeightPage';
+import AssessmentPage from '@/pages/AssessmentPage';
 
 
 export const router = createBrowserRouter([
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
               }
       ],
     },
+    {path:'/assessment', element:<AssessmentPage />}
   ],
 },
     ],

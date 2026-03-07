@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { login } from "@/services/auth"; // 👈 普通导入（函数）
 import type { LoginData } from "@/services/auth"; // 👈 类型导入（加 type）
-import { setToken ,getToken} from "@/utils/auth";
+import { setToken ,getToken,setUsername} from "@/utils/auth";
 import { Card, Form, Input, Button, Typography, message, Checkbox } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
@@ -28,6 +28,7 @@ export default function LoginPage() {
   useEffect(() => {
   if (getToken()) {
     navigate('/dashboard', { replace: true });
+    
   }
 }, [navigate]);
 
@@ -39,6 +40,7 @@ export default function LoginPage() {
     try {
       const res = await login(values);
       setToken(res.token,values.rememberMe); // 注意：如果用了拦截器改造，res 就是 data，不是 res.data
+      setUsername(res.username, values.rememberMe);
       message.success("登录成功！");
       navigate("/dashboard");
     } catch (error) {

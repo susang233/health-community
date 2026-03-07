@@ -27,6 +27,16 @@ public class HealthController {
 
     }
 
+    @Operation(
+            summary = "检查健康档案存在"
+    )
+    @GetMapping("/check-profile")
+    public Result checkHealthProfile(String username){
+
+        return Result.success(healthService.isProfileCompleted(username));
+
+    }
+
 
 
 }

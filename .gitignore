@@ -20,3 +20,8 @@ target/
 # OS
 .DS_Store
 __MACOSX/
+backend/todo.md
+backend/mvnw.cmd
+backend/mvnw
+backend/.mvn/wrapper/maven-wrapper.properties
+backend/.gitattributes

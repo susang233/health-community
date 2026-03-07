@@ -25,13 +25,7 @@ export const setToken = (token: string, rememberMe: boolean): void => {
   }
 };
 
-/**
- * 清除 token（两个存储都清）
- */
-export const removeToken = (): void => {
-  localStorage.removeItem('token');
-  sessionStorage.removeItem('token');
-};
+
 
 /**
  * 检查是否有 token（用于判断登录状态）
@@ -75,3 +69,30 @@ export const isTokenValid = (): boolean => {
   }
 };
 
+
+
+export const getUsername = (): string | null => {
+  // 先读 localStorage（记住我）
+  const username = localStorage.getItem('username');
+  if (username) return username;
+  
+  // 再读 sessionStorage（不记住我）
+  return sessionStorage.getItem('username');
+};
+export const setUsername = (username: string, rememberMe: boolean): void => {
+  if (rememberMe) {
+    localStorage.setItem('username', username);
+    sessionStorage.removeItem('username'); // 清理另一个存储，保持数据一致
+  } else {
+    sessionStorage.setItem('username', username);
+    localStorage.removeItem('username');   // 清理另一个存储
+  }
+};
+
+// ===== 退出登录（清理所有）=====
+export const logout = (): void => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('username');
+  sessionStorage.removeItem('token');
+  sessionStorage.removeItem('username');
+};
