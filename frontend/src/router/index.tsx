@@ -10,19 +10,24 @@ import DashboardPage from '@/pages/DashboardPage'; // 仪表盘内容组件
 
 import DashboardLayout from '@/layouts/DashboardLayout';
 import WeightPage from '@/pages/Health/WeightPage';
-import AssessmentLayout from '@/pages/AssessmentPage';
-import GenderStep from '@/pages/AssessmentPage/step/GenderStep';
-import HeightStep from '@/pages/AssessmentPage/step/HeightStep';
-import WeightStep from '@/pages/AssessmentPage/step/WeightStep';
-import BirthdayStep from '@/pages/AssessmentPage/step/BirthdayStep';
-import ActivityStep from '@/pages/AssessmentPage/step/ActivityStep'; 
+
+
+import AssessmentPage from '@/pages/AssessmentPage';
+import AssessmentResult from '@/pages/AssessmentPage/step/AssessmentResult';
+import { getToken ,isTokenValid} from '@/utils/auth';
 
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <App />,
     children: [
-      
+{ 
+        index: true, 
+        element: <Navigate 
+          to={(getToken()&&isTokenValid()) ? '/dashboard' : '/login'} 
+          replace 
+        /> 
+      },
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
 
@@ -56,14 +61,11 @@ export const router = createBrowserRouter([
     },
     {
   path: '/assessment',
-  element: <AssessmentLayout />,  // 包含进度条和返回按钮
+ 
   children: [
-    { index: true, element: <Navigate to="gender" /> },
-    { path: 'gender', element: <GenderStep /> },
-    { path: 'height', element: <HeightStep /> },
-    { path: 'weight', element: <WeightStep /> },
-    { path: 'birthday', element: <BirthdayStep /> },
-    { path: 'activity', element: <ActivityStep /> },
+    { index: true, element: <AssessmentPage/> },
+    { path: 'result', element: <AssessmentResult /> },
+   
   ]
 }
   ],

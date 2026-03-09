@@ -22,7 +22,7 @@ export const useHealthProfile = () => {
       const res = await checkHealthProfile(username);
       setHasProfile(res);
     } catch (error) {
-      message.error('获取健康档案失败');
+      message.error(error.message || '获取健康档案失败');
       setHasProfile(false);
     } finally {
       setLoading(false);

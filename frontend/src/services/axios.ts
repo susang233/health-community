@@ -34,6 +34,7 @@ api.interceptors.response.use(
      const error: ApiError = new Error(message || '请求失败') as ApiError;
       error.code = code;
       error.data = response.data;
+      error.message = message || '请求失败';
       throw error;
     }
   },

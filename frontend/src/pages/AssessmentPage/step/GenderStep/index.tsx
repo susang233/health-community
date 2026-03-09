@@ -1,9 +1,16 @@
-export default function GenderStep() {
+import { Radio } from 'antd';
+import { Gender } from '@/types/gender';
+
+interface Props {
+  value?: Gender;
+  onChange: (gender: Gender) => void;
+}
+
+export default function GenderStep({ value, onChange }: Props) {
   return (
-    <div>
-      <h2>第一步：选择性别</h2>
-      <p>请选择您的性别，以便我们为您提供更准确的每日推荐热量。</p>
-      {/* 这里可以放一些选择性别的按钮或者组件 */}
-    </div>
+    <Radio.Group value={value} onChange={(e) => onChange(e.target.value)}>
+      <Radio value={Gender.MALE}>男</Radio>
+      <Radio value={Gender.FEMALE}>女</Radio>
+    </Radio.Group>
   );
 }
