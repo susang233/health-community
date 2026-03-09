@@ -39,7 +39,7 @@ export const useHealthProfile = () => {
     } else {
       Modal.confirm({
         title: '完善健康档案',
-        content: '您还没有完善健康档案，完善后才能使用该功能哦！',
+        content: '您还没有完善健康档案，完善后可以获得每日推荐热量并使用该功能哦！',
         okText: '去完善',
         cancelText: '稍后',
         onOk: () => navigate('/assessment'),
