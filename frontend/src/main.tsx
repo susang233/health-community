@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 import { ConfigProvider } from 'antd'; // 👈 新增导入
 import { router } from '@/router';
-
+import '@arco-design/web-react/dist/css/arco.css'; 
 // 👇 定义你的绿色主题
 const theme = {
   token: {

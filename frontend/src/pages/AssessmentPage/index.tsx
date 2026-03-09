@@ -70,10 +70,12 @@ export default function AssessmentPage() {
   // 处理下一步
   const handleNext = () => {
     if (!isCurrentStepValid()) {
+      console.log('_Submitting formData:', formData); // 调试输出当前表单数据
       message.error("请填写完整信息后再继续");
       return;
     }
     if (currentStep < TOTAL_STEPS - 1) {
+      console.log('_Submitting formData:', formData); // 👈 提交前打印完整数据
       setCurrentStep(currentStep + 1);
     } else {
       // 最后一步，提交测评
