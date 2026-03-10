@@ -4,7 +4,7 @@ export interface AssessmentData {
   username?: string;
   gender?: Gender;
   height?: number;
-  weight?: number;
+ 
   birthday?: string; // YYYY-MM-DD
   activityLevel?: ActivityLevel;
   currentWeight?: number;
@@ -15,7 +15,7 @@ export interface AssessmentResult {
   username?: string;
   gender?: Gender;
   height?: number;
-  weight?: number;
+ 
   birthday?: string; // YYYY-MM-DD
   activityLevel?: ActivityLevel;
   currentWeight?: number;

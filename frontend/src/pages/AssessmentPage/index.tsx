@@ -22,9 +22,10 @@ export default function AssessmentPage() {
     username: undefined,
     gender: undefined,
     height: undefined,
-    weight: undefined,
+    currentWeight: undefined,
     birthday: undefined,
     activityLevel: undefined,
+    targetWeight: undefined,
   });
   const navigate = useNavigate();
   const { token } = theme.useToken();
@@ -56,7 +57,7 @@ export default function AssessmentPage() {
       case 1:
         return formData.height !== undefined && formData.height > 0;
       case 2:
-        return formData.weight !== undefined && formData.weight > 0;
+        return formData.currentWeight !== undefined && formData.currentWeight > 0;
       case 3:
         return formData.birthday !== undefined;
       case 4:
@@ -95,7 +96,7 @@ export default function AssessmentPage() {
     }
   };
 
-  const percent = Math.round((currentStep / (TOTAL_STEPS - 1)) * 100); // 0% ~ 100%
+  const percent = Math.round((currentStep / (TOTAL_STEPS )) * 100); // 0% ~ 100%
 
   // 渲染当前步骤
   const renderCurrentStep = () => {
@@ -118,9 +119,9 @@ export default function AssessmentPage() {
       case 2:
         return (
           <WeightStep
-            value={formData.weight} // 在这一步要计算bmi并赋值给formData，以便下一步使用
+            value={formData.currentWeight} // 在这一步要计算bmi并赋值给formData，以便下一步使用
             height={formData.height} // 👈 关键：传递身高影响默认值
-            onChange={(weight) => updateFormData({ weight})}
+            onChange={(currentWeight) => updateFormData({ currentWeight })}
           />
         );
       case 3:
@@ -142,6 +143,7 @@ export default function AssessmentPage() {
           <TargetWeightStep
             value={formData.targetWeight}
             height={formData.height} //传递身高计算bmi=20的值为目标体重默认值
+            weight={formData.currentWeight} //传递当前体重计算目标体重默认值
             onChange={(targetWeight) => updateFormData({ targetWeight })}
           />
         );

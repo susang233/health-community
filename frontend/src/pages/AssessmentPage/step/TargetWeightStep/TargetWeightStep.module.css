@@ -1,0 +1,16 @@
+/* 自定义 Arco Design Slider 样式 */
+
+
+.weightSlider :global(.ant-slider-dot) {
+   width: 1px;
+   height: 5px;
+  border-radius: 0;
+   background-color: #ffa7a7;
+  border: none;
+  
+}
+:global(.bmiSlider.ant-slider-disabled .ant-slider-rail) {
+  height: 5px !important;
+  background-color: #ffa7a7 !important;
+  border-radius: 0 !important;
+}
