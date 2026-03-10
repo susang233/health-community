@@ -1,12 +1,9 @@
-/* 自定义 Arco Design Slider 样式 */
-.heightSlider :global(.arco-slider-rail) {
-  background-color: #e0e0e0;
-  height: 6px;
+.heightSlider :global(.ant-slider-dot) {
+  
+width: 1px;
+   height: 5px;
+  border-radius: 0;
+   background-color: #ffa7a7;
+  border: none;
+
 }
-
-.heightSlider :global(.arco-slider-bar) {
-  background-color: #7dd551;
-  height: 6px;
-}
-
-

@@ -1,5 +1,5 @@
 import { Gender } from "@/types/gender";
-import { Slider, InputNumber } from "@arco-design/web-react";
+import { Slider, InputNumber } from "antd";
 import styles from './HeightStep.module.css';
 import { useEffect } from "react";
 
@@ -13,6 +13,7 @@ export default function HeightStep({
   gender,
   onChange,
 }: HeightStepProps) {
+
   const getDefaultHeight = () => {
     if (value !== undefined) return value; // 已有值优先
     if (gender === Gender.MALE) {
@@ -21,6 +22,7 @@ export default function HeightStep({
     return 165; // 默认
   };
   const currentValue = value ?? getDefaultHeight();
+
   useEffect(() => {
   if (value == null && gender != null) {
     const defaultVal = gender === Gender.MALE ? 170 : 160;
@@ -45,36 +47,43 @@ export default function HeightStep({
           value={currentValue}
           min={100}
           max={220}
-          step={5}
+          step={1}
            marks={{
             100: '100',
-            140: '140',
+            150: '150',
+            160: '160',
             170: '170',
             200: '200',
             220: '220',
           }}
-          showTicks
+          dots={true}
           onChange={(val) => onChange(typeof val === 'number' ? val : val[0])}
           style={{ width: 500, margin: "0 auto" }}
         />
       </div>
       <div
         style={{
-          marginTop: 20,
+          marginTop: 30,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
         <InputNumber
-          value={currentValue}
+          
           min={100}
           max={220}
           step={1}
+         controls={false}
+          suffix="cm"
+          value={currentValue}
           onChange={(value) => onChange(value ?? currentValue)}
-          style={{ width: "60px" }}
+          style={{ width: "74px" }}
         />
-        <span> cm</span>
+        
+        
+        
+        
       </div>
     </div>
   );

@@ -118,9 +118,9 @@ export default function AssessmentPage() {
       case 2:
         return (
           <WeightStep
-            value={[formData.weight, formData.bmi]} //在这一步要计算bmi并赋值给formData，以便下一步使用
+            value={formData.weight} // 在这一步要计算bmi并赋值给formData，以便下一步使用
             height={formData.height} // 👈 关键：传递身高影响默认值
-            onChange={([weight, bmi]) => updateFormData({ weight, bmi })}
+            onChange={(weight) => updateFormData({ weight})}
           />
         );
       case 3:
