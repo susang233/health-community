@@ -1,5 +1,4 @@
 import { Card, Button, theme, message, Progress } from "antd";
-import type { StepsProps } from "antd";
 import { useState, useEffect } from "react";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
@@ -143,7 +142,7 @@ export default function AssessmentPage() {
           <TargetWeightStep
             value={formData.targetWeight}
             height={formData.height} //传递身高计算bmi=20的值为目标体重默认值
-            weight={formData.currentWeight} //传递当前体重计算目标体重默认值
+            currentWeight={formData.currentWeight} //传递当前体重计算目标体重默认值
             onChange={(targetWeight) => updateFormData({ targetWeight })}
           />
         );
@@ -160,11 +159,7 @@ export default function AssessmentPage() {
       }}
     >
       <Card
-        styles={{
-          width: "400px",
-          borderRadius: "12px",
-          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.15)",
-        }}
+       
         title={
           <div style={{ display: "flex", alignItems: "center" }}>
             <Button

@@ -8,36 +8,40 @@ interface TargetWeightStepProps {
   onChange: (targetWeight: number) => void;
 }
 
-export default function TargetWeightStep({ value, height, currentWeight, onChange }: TargetWeightStepProps) {
-
- const heightInMeters = useMemo(() => {
+export default function TargetWeightStep({
+  value,
+  height,
+  currentWeight,
+  onChange,
+}: TargetWeightStepProps) {
+  const heightInMeters = useMemo(() => {
     return height ? height / 100 : 1.7;
   }, [height]);
 
   const getDefaultTargetWeight = () => {
     if (value !== undefined) return value;
 
-    const defaultTargetWeight = Math.round(20 * heightInMeters ** 2);// 以 BMI=20 作为目标体重的默认值
-    
+    const defaultTargetWeight = Math.round(20 * heightInMeters ** 2); // 以 BMI=20 作为目标体重的默认值
+
     return defaultTargetWeight < 25 ? 25 : defaultTargetWeight;
   };
 
   const currentTargetWeight = () => value ?? getDefaultTargetWeight();
 
-    useEffect(() => {
-      if (value == null && height != null) {
-        const defaultTargetWeight = getDefaultTargetWeight();
-        onChange(defaultTargetWeight);
-      }
-    }, [value, height, onChange]);
-  
-    const currentTargetWeightValue = currentTargetWeight();
+  useEffect(() => {
+    if (value == null && height != null) {
+      const defaultTargetWeight = getDefaultTargetWeight();
+      onChange(defaultTargetWeight);
+    }
+    console.log("【TargetWeightStep useEffect】", { value, height,currentWeight }); // 调试日志
+  }, [value, height, onChange]);
+
+  const currentTargetWeightValue = currentTargetWeight();
 
   return (
-     <div>
+    <div>
       <div>
         <h3 style={{ textAlign: "center" }}>你的目标体重是？</h3>
-        
       </div>
       <div style={{ marginTop: 40 }}>
         <Slider
@@ -81,14 +85,24 @@ export default function TargetWeightStep({ value, height, currentWeight, onChang
         />
       </div>
       <div style={{ display: "flex", margin: "20px 0 0 0" }}>
-        
-{currentTargetWeightValue < currentWeight ? (
-          <Card style={{ margin: "20px auto", width: 400, textAlign: "center", color: "#66ca63" }}>
-            将减重 {Math.round(((currentWeight - currentTargetWeightValue) / currentWeight) * 100)}%！相信你可以哦，我们陪你一起加油！
+        {currentTargetWeightValue < currentWeight ? (
+          <Card
+            style={{
+              margin: "20px auto",
+              width: 400,
+              textAlign: "center",
+              color: "#66ca63",
+            }}
+          >
+            将减重{" "}
+            {Math.round(
+              ((currentWeight - currentTargetWeightValue) / currentWeight) *
+                100,
+            )}
+            %！相信你可以哦，我们陪你一起加油！
           </Card>
         ) : null}
       </div>
-      
     </div>
   );
 }

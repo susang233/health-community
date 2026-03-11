@@ -61,6 +61,7 @@ public class HealthService {
     }
 
     public HealthProfileVO saveHealthProfile(@Valid HealthProfileDTO healthProfileDTO) {
+        log.info("health",healthProfileDTO);
         //提取dto里的username，通过username在user里查询到userId
         String username = healthProfileDTO.getUsername();
         User user = userRepository.findByUsername(username)
