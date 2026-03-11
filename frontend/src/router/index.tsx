@@ -10,7 +10,7 @@ import DashboardPage from '@/pages/DashboardPage'; // 仪表盘内容组件
 
 import DashboardLayout from '@/layouts/DashboardLayout';
 import WeightPage from '@/pages/Health/WeightPage';
-
+import DietPage from '@/pages/Health/DietPage';
 
 import AssessmentPage from '@/pages/AssessmentPage';
 import AssessmentResult from '@/pages/AssessmentPage/step/AssessmentResult';
@@ -45,6 +45,7 @@ export const router = createBrowserRouter([
                 children: [
                   { index: true, element: <Navigate to="weight" replace /> }, // 可选的健康模块首页
                   { path: 'weight', element: <WeightPage /> },
+                  { path: 'diet', element: <DietPage /> },
                   
                   // ... 其他
                 ]

@@ -41,7 +41,7 @@ export default function DashboardLayout() {
   const pageTitleMap: Record<string, string> = {
     "/dashboard": "数据总览",
     "/dashboard/health/weight": "体重记录",
-    "/dashboard/health/food": "饮食记录",
+    "/dashboard/health/diet": "饮食记录",
     "/dashboard/health/water": "喝水记录",
     "/dashboard/health/sleep": "睡眠记录",
     "/dashboard/community/posts": "帖子列表",

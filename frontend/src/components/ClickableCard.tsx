@@ -14,7 +14,11 @@ export default function ClickableCard({ to,  requireProfile = true,
   children,...props }: ClickableCardProps) {
   const navigate = useNavigate();
   const { hasProfile, requireProfile: showProfileModal  } = useHealthProfile();
-const handleCardClick = () => {
+const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest?.("[data-no-navigate]")) {
+     
+      return;
+    }
     if (!requireProfile || hasProfile) {
       // 不需要检查 或 已有档案 → 直接跳转
       navigate(to);
@@ -31,7 +35,7 @@ const handleCardClick = () => {
   };
 
 
-  
+
    // 根据是否有档案决定卡片内容
   const renderContent = () => {
     // 需要检查且没有档案 → 显示占位内容

@@ -10,7 +10,7 @@ const healthSiderItems: MenuProps['items'] = [
     label: '体重记录',
   },
   {
-    key: 'food',
+    key: 'diet',
     label: '饮食记录',
   },
   {

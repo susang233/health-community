@@ -56,7 +56,9 @@ export default function AssessmentPage() {
       case 1:
         return formData.height !== undefined && formData.height > 0;
       case 2:
-        return formData.currentWeight !== undefined && formData.currentWeight > 0;
+        return (
+          formData.currentWeight !== undefined && formData.currentWeight > 0
+        );
       case 3:
         return formData.birthday !== undefined;
       case 4:
@@ -70,12 +72,12 @@ export default function AssessmentPage() {
   // 处理下一步
   const handleNext = () => {
     if (!isCurrentStepValid()) {
-      console.log('_Submitting formData:', formData); // 调试输出当前表单数据
+      console.log("_Submitting formData:", formData); // 调试输出当前表单数据
       message.error("请填写完整信息后再继续");
       return;
     }
     if (currentStep < TOTAL_STEPS - 1) {
-      console.log('_Submitting formData:', formData); // 👈 提交前打印完整数据
+      console.log("_Submitting formData:", formData); // 👈 提交前打印完整数据
       setCurrentStep(currentStep + 1);
     } else {
       // 最后一步，提交测评
@@ -89,13 +91,13 @@ export default function AssessmentPage() {
     if (res) {
       message.success("测评提交成功！");
       // TODO: 调用 API 提交测评结果
-      navigate("/assessment/result",{state:{result:res}}); //提交成功后跳转到结果页，并传递测评结果
+      navigate("/assessment/result", { state: { result: res } }); //提交成功后跳转到结果页，并传递测评结果
     } else {
       message.error("测评提交失败，请稍后重试");
     }
   };
 
-  const percent = Math.round((currentStep / (TOTAL_STEPS )) * 100); // 0% ~ 100%
+  const percent = Math.round((currentStep / TOTAL_STEPS) * 100); // 0% ~ 100%
 
   // 渲染当前步骤
   const renderCurrentStep = () => {
@@ -159,7 +161,6 @@ export default function AssessmentPage() {
       }}
     >
       <Card
-       
         title={
           <div style={{ display: "flex", alignItems: "center" }}>
             <Button
