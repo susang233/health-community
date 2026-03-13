@@ -2,7 +2,9 @@ package com.health.community.common.config;
 
 import com.health.community.common.interceptor.LoginInterceptor;
 import com.health.community.common.properties.AppProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -50,6 +52,10 @@ public class WebConfig implements WebMvcConfigurer {
                         // 示例：食物搜索可公开（如果不需要登录）
                         // 后续可在此添加更多公开接口
                 );
+    }
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
     }
 
 }
