@@ -11,7 +11,7 @@ import java.util.List;
 @SpringBootTest
 public class BooHeeClientTest {
 
-    // 注入你要测试的客户端
+
     @Resource
     private BooHeeClient booHeeClient;
 
@@ -26,7 +26,7 @@ public class BooHeeClientTest {
     @Test
     public void testSearchFoods() {
         List<BooHeeSearchResponse.BooHeeFoodItem> list =
-                booHeeClient.searchFoods("苹果", 1, "");
+                booHeeClient.searchFoods("蛋", 1, "");
 
         System.out.println("✅ 搜索到食物数量：" + list.size());
         list.forEach(item -> {
