@@ -1,8 +1,6 @@
 package com.health.community.common.clients.boohee;
-
-
-import com.health.community.common.clients.boohee.dto.BooHeeAccessTokenRequest;
 import com.health.community.common.clients.boohee.dto.BooHeeAccessTokenResponse;
+import com.health.community.common.clients.boohee.dto.BooHeeFoodResponse;
 import com.health.community.common.clients.boohee.dto.BooHeeSearchResponse;
 import com.health.community.common.clients.boohee.utils.SignUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -123,7 +121,7 @@ public class BooHeeClient {
             return newToken;
         }
     }
-    // 在 BooHeeClient.java 中添加
+
 
     public List<BooHeeSearchResponse.BooHeeFoodItem> searchFoods(String q, Integer page,          // 可选
                                                                  String foodType  ) {
@@ -155,4 +153,27 @@ public class BooHeeClient {
         return Optional.ofNullable(response.getBody().getFoods())
                 .orElse(Collections.emptyList());
     }
+
+    public BooHeeFoodResponse getFoodDetail(String code  ) {
+        String accessToken = getAccessToken(); // 自动获取或复用缓存
+
+        // 使用 UriComponentsBuilder 动态构建 URL接口为/api/v3/foods/:code
+        UriComponentsBuilder builder = UriComponentsBuilder
+                .fromHttpUrl(properties.getBaseUrl())
+                .path("/v3/foods/{code}") // 使用 {code} 占位符
+                .queryParam("AccessToken", accessToken);
+
+        URI uri = builder.buildAndExpand(code).toUri(); // 替换 {code}
+        System.out.println("Request URL: " + uri);
+
+        ResponseEntity<BooHeeFoodResponse> response = restTemplate.getForEntity(uri, BooHeeFoodResponse.class);
+        System.out.println("Raw: " + response.getBody());
+        // ... 解析响应（同之前逻辑）
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new RuntimeException("Failed to get food from BooHee API");
+        }
+
+        return response.getBody();
+    }
+
 }

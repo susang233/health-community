@@ -1,6 +1,7 @@
 package com.health.community.common.clients;
 
 import com.health.community.common.clients.boohee.BooHeeClient;
+import com.health.community.common.clients.boohee.dto.BooHeeFoodResponse;
 import com.health.community.common.clients.boohee.dto.BooHeeSearchResponse;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
@@ -32,5 +33,15 @@ public class BooHeeClientTest {
         list.forEach(item -> {
             System.out.println("食物名：" + item.getName() + "，热量：" + item.getCalory());
         });
+    }
+
+    // 测试 3：获取食物详情
+    @Test
+    public void testgetFoodDetail() {
+
+        BooHeeFoodResponse booHeeClientFoodDetail = booHeeClient.getFoodDetail("fanqiechaodan");
+
+        System.out.println("✅ 搜索到的食物详情：" + booHeeClientFoodDetail);
+        System.out.println("✅ 搜索到的食物详情food：" + booHeeClientFoodDetail.getFood());
     }
 }

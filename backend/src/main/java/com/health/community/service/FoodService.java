@@ -2,12 +2,16 @@ package com.health.community.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.health.community.common.clients.boohee.BooHeeClient;
+import com.health.community.common.clients.boohee.dto.BooHeeFoodResponse;
 import com.health.community.common.clients.boohee.dto.BooHeeSearchResponse;
+import com.health.community.common.exception.BusinessException;
+import com.health.community.common.result.Result;
 import com.health.community.common.util.CacheKeyUtils;
 import com.health.community.entity.Food;
 import com.health.community.entity.FoodDoc;
 import com.health.community.repository.FoodEsRepository;
 import com.health.community.repository.FoodRepository;
+import com.health.community.vo.FoodDetailVO;
 import com.health.community.vo.FoodSearchVO;
 import com.health.community.vo.FoodVO;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +26,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static com.health.community.common.constant.MessageConstant.CODE_CAN_NOT_BE_NULL;
 
 @Slf4j
 @Service
@@ -147,6 +153,7 @@ public class FoodService {
                 .healthLight(item.getHealthLight())
                 .caloriesPer100g(item.getCalorieValue())
                 .isLiquid(item.getIsLiquid())
+
                 .build();
     }
 
@@ -162,6 +169,39 @@ public class FoodService {
                 !Objects.equals(existing.getHealthLight(), newItem.getHealthLight()) ||
                 !Objects.equals(existing.getCaloriesPer100g(), newItem.getCalorieValue()) ||
                 !Objects.equals(existing.getIsLiquid(), newItem.getIsLiquid());
+    }
+
+    /**
+     * 判断数据有没有更新
+     * @param existing
+     * @param newItem
+     * @return
+     */
+    private boolean isFoodChanged(Food existing, BooHeeFoodResponse newItem) {
+        // 从 calory 列表找 total_calory
+        Double newCalories = extractTotalCalories(newItem);
+
+        // 从 baseIngredients 找 protein/fat/carbs
+        Double newProtein = findBaseIngredientValue(newItem.getBaseIngredients(), "protein");
+        Double newFat = findBaseIngredientValue(newItem.getBaseIngredients(), "fat");
+        Double newCarbs = findBaseIngredientValue(newItem.getBaseIngredients(), "carbohydrate");
+
+        return !Objects.equals(existing.getName(), newItem.getFood().getName()) ||
+                !Objects.equals(existing.getImageUrl(), newItem.getFood().getThumbImageUrl()) ||
+                !Objects.equals(existing.getHealthLight(), newItem.getHealthLight()) ||
+                !Objects.equals(existing.getCaloriesPer100g(), newCalories) ||
+                !Objects.equals(existing.getProteinPer100g(), newProtein) ||
+                !Objects.equals(existing.getFatPer100g(), newFat) ||
+                !Objects.equals(existing.getCarbsPer100g(), newCarbs);
+    }
+
+    private Double findBaseIngredientValue(List<BooHeeFoodResponse.BaseIngredients> list, String nameEn) {
+        if (list == null) return null;
+        return list.stream()
+                .filter(item -> nameEn.equals(item.getNameEn()))
+                .findFirst()
+                .map(BooHeeFoodResponse.BaseIngredients::getValue)
+                .orElse(null);
     }
 
     /**
@@ -193,4 +233,122 @@ public class FoodService {
         return vo;
     }
 
+
+    //获取食物详情
+    public FoodDetailVO getFoodDetail(String code){
+        if (code == null || code.trim().isEmpty()) {
+            throw new BusinessException(CODE_CAN_NOT_BE_NULL );
+        }
+        String cacheKey = CacheKeyUtils.getFoodDetailKey(code);
+
+        //redis查询
+        String cachedJson = redisTemplate.opsForValue().get(cacheKey);
+        if (cachedJson != null) {
+            try {
+                return objectMapper.readValue(cachedJson, FoodDetailVO.class);
+            } catch (Exception e) {
+                log.warn("Redis 缓存解析失败，key={}", cacheKey, e);
+                // 解析失败就当没缓存，继续往下查
+            }
+        }
+
+        FoodDetailVO result;
+
+        //从数据库查询
+        Food food = foodRepository.findByCode(code);
+        //  判断是否需要调用薄荷 API（缺少任一关键营养字段）
+        boolean needFetchFromApi = food == null ||
+                food.getCaloriesPer100g() == null ||
+                food.getProteinPer100g() == null ||
+                food.getFatPer100g() == null ||
+                food.getCarbsPer100g() == null;
+        if(food==null){
+            //没有详情，调薄荷+存到redis和mysql
+            BooHeeFoodResponse foodDetail = booHeeClient.getFoodDetail(code);
+
+            Food foodToSave = buildFoodEntityFromApiResponse(foodDetail);
+
+            foodRepository.save(foodToSave);
+            result= toDetailVO(foodToSave);
+            try {
+
+                String json = objectMapper.writeValueAsString(result);
+                redisTemplate.opsForValue().set(cacheKey, json, 1, TimeUnit.HOURS);
+            } catch (Exception e) {
+                log.error("缓存到 Redis 失败", e);
+            }
+        }
+        else if(needFetchFromApi) {
+            BooHeeFoodResponse foodDetail = booHeeClient.getFoodDetail(code);
+            food.setCaloriesPer100g(
+                    extractTotalCalories(foodDetail)
+            );
+            food.setProteinPer100g(findBaseIngredientValue(foodDetail.getBaseIngredients(), "protein"));
+            food.setFatPer100g(findBaseIngredientValue(foodDetail.getBaseIngredients(), "fat"));
+            food.setCarbsPer100g(findBaseIngredientValue(foodDetail.getBaseIngredients(), "carbohydrate"));
+            foodRepository.save(food); // 保存原实体（更新部分字段）
+
+            result = toDetailVO(food);
+            try {
+
+                String json = objectMapper.writeValueAsString(result);
+                redisTemplate.opsForValue().set(cacheKey, json, 1, TimeUnit.HOURS);
+            } catch (Exception e) {
+                log.error("缓存到 Redis 失败", e);
+            }
+        } else{
+            //有，构建VO返回
+            result= toDetailVO(food);
+        }
+
+        return result;
+
+
+    }
+
+    private static FoodDetailVO toDetailVO(Food foodToSave) {
+        return FoodDetailVO.builder()
+                .code(foodToSave.getCode())
+                .name(foodToSave.getName())
+                .imageUrl(foodToSave.getImageUrl())
+                .isLiquid(foodToSave.getIsLiquid())
+                .healthLight(foodToSave.getHealthLight())
+                .caloriesPer100g(foodToSave.getCaloriesPer100g())
+                .proteinPer100g(foodToSave.getProteinPer100g())
+                .fatPer100g(foodToSave.getFatPer100g())
+                .carbsPer100g(foodToSave.getCarbsPer100g())
+                .build();
+    }
+
+    private Food buildFoodEntityFromApiResponse(BooHeeFoodResponse response) {
+        Double calories = extractTotalCalories(response);
+
+        Double protein = findBaseIngredientValue(response.getBaseIngredients(), "protein");
+        Double fat = findBaseIngredientValue(response.getBaseIngredients(), "fat");
+        Double carbs = findBaseIngredientValue(response.getBaseIngredients(), "carbohydrate");
+
+        return Food.builder()
+                .code(response.getFood().getCode())
+                .name(response.getFood().getName())
+                .imageUrl(response.getFood().getThumbImageUrl())
+                .healthLight(response.getHealthLight())
+                .caloriesPer100g(calories)
+                .proteinPer100g(protein)
+                .fatPer100g(fat)
+                .carbsPer100g(carbs)
+                .isLiquid(false)
+
+                .build();
+    }
+
+    private static Double extractTotalCalories(BooHeeFoodResponse response) {
+        if (response == null || response.getCalory() == null) {
+            return null;
+        }
+        return response.getCalory().stream()
+                .filter(c -> "total_calory".equals(c.getNameEn()))
+                .findFirst()
+                .map(BooHeeFoodResponse.Calory::getValueNum)
+                .orElse(null);
+    }
 }

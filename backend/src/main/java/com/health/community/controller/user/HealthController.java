@@ -5,12 +5,17 @@ import com.health.community.service.HealthService;
 import com.health.community.vo.HealthProfileVO;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import static com.health.community.common.constant.MessageConstant.CODE_CAN_NOT_BE_NULL;
 
 @RestController // ← 关键！返回 JSON
 @RequestMapping("/user/health") // 建议加统一前缀
 @RequiredArgsConstructor
+@Validated
 public class HealthController {
 
     private final HealthService healthService;
@@ -31,7 +36,9 @@ public class HealthController {
             summary = "检查健康档案存在"
     )
     @GetMapping("/check-profile")
-    public Result checkHealthProfile(String username){
+    public Result checkHealthProfile(@RequestParam
+                                         @NotBlank(message = CODE_CAN_NOT_BE_NULL)
+                                         String username){
 
         return Result.success(healthService.isProfileCompleted(username));
 

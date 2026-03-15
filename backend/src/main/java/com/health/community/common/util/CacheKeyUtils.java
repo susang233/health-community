@@ -9,11 +9,8 @@ public class CacheKeyUtils {
                 ":page:" + page +
                 ":size:" + size;
     }
-    public static String getBooHeeTotalPagesKey(String q) {
-        return "food:boohee_total_pages:" + q;
+    public static String getFoodDetailKey(String code) {
+        return "food:detail:" + code;
     }
 
-    public static String getLocalSyncedPagesKey(String q) {
-        return "food:local_synced_pages:" + q; // 记录已同步到第几页
-    }
 }
