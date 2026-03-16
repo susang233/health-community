@@ -19,5 +19,6 @@ public class FoodVO implements Serializable {
     private Boolean isLiquid;
     private Integer healthLight;
 
+
     private Double caloriesPer100g;//每百克热量
 }

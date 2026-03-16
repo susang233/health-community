@@ -3,6 +3,7 @@ package com.health.community.repository;
 
 import com.health.community.entity.Food;
 import com.health.community.entity.HealthProfile;
+import com.health.community.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +14,6 @@ public interface FoodRepository extends JpaRepository<Food, Long> {
     boolean existsByCode(String code);
 
 
+    Optional<Food> findByCode(String code);
 
-    Food findByCode(String code);
 }

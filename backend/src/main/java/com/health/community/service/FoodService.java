@@ -5,7 +5,7 @@ import com.health.community.common.clients.boohee.BooHeeClient;
 import com.health.community.common.clients.boohee.dto.BooHeeFoodResponse;
 import com.health.community.common.clients.boohee.dto.BooHeeSearchResponse;
 import com.health.community.common.exception.BusinessException;
-import com.health.community.common.result.Result;
+
 import com.health.community.common.util.CacheKeyUtils;
 import com.health.community.entity.Food;
 import com.health.community.entity.FoodDoc;
@@ -22,8 +22,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -104,39 +106,42 @@ public class FoodService {
 
         return result;
 }
+    private void updateFoodFromItem(Food food, BooHeeSearchResponse.BooHeeFoodItem item) {
+        food.setName(item.getName());
+        food.setImageUrl(item.getThumbImageUrl());
+        food.setHealthLight(item.getHealthLight());
+        food.setCaloriesPer100g(item.getCalorieValue());
+        food.setIsLiquid(item.getIsLiquid());
+        // 注意：不要更新 code（主键）
+    }
 
-    /**
-     * 把从薄荷搜索接口获得的数据保存到es和mysql
-     * @param response
+    /**把从薄荷搜索接口获得的数据保存到es和mysql
+     *
+     * @param items
      */
-    private void saveBooHeeFoodsToDbAndEs(List<BooHeeSearchResponse.BooHeeFoodItem> response) {
-        for (BooHeeSearchResponse.BooHeeFoodItem item : response) {
-            // 1. 先查数据库是否存在
-            Food existingFood = foodRepository.findByCode(item.getCode());
+    private void saveBooHeeFoodsToDbAndEs(List<BooHeeSearchResponse.BooHeeFoodItem> items) {
+        List<Food> foodsToSave = new ArrayList<>();
 
-            Food foodToSave;
-            if (existingFood == null) {
-                // 2. 不存在 → 新建
-                foodToSave = buildFoodFromItem(item);
+        for (BooHeeSearchResponse.BooHeeFoodItem item : items) {
+            Optional<Food> existingOpt = foodRepository.findByCode(item.getCode());
+
+            if (existingOpt.isEmpty()) {
+                foodsToSave.add(buildFoodFromItem(item));
             } else {
-                // 3. 存在 → 比较字段，决定是否更新
-                if (isFoodChanged(existingFood, item)) {
-                    // 更新字段（保留 ID）
-                    existingFood.setName(item.getName());
-                    existingFood.setImageUrl(item.getThumbImageUrl());
-                    existingFood.setHealthLight(item.getHealthLight());
-                    existingFood.setCaloriesPer100g(item.getCalorieValue());
-                    existingFood.setIsLiquid(item.getIsLiquid());
-                    foodToSave = existingFood;
-                } else {
-                    // 无变化，跳过
-                    continue;
+                Food existing = existingOpt.get();
+                if (isFoodChanged(existing, item)) {
+                    updateFoodFromItem(existing, item);
+                    foodsToSave.add(existing);
                 }
             }
+        }
 
-            // 4. 保存到 DB 和 ES
-            Food savedFood = foodRepository.save(foodToSave);
-            foodEsRepository.save(savedFood.toFoodDoc());
+        if (!foodsToSave.isEmpty()) {
+            List<Food> savedFoods = foodRepository.saveAll(foodsToSave);
+            List<FoodDoc> docs = savedFoods.stream()
+                    .map(Food::toFoodDoc)
+                    .collect(Collectors.toList());
+            foodEsRepository.saveAll(docs);
         }
     }
 
@@ -255,7 +260,8 @@ public class FoodService {
         FoodDetailVO result;
 
         //从数据库查询
-        Food food = foodRepository.findByCode(code);
+        Optional<Food> foodOpt = foodRepository.findByCode(code);
+        Food food = foodOpt.orElse(null);
         //  判断是否需要调用薄荷 API（缺少任一关键营养字段）
         boolean needFetchFromApi = food == null ||
                 food.getCaloriesPer100g() == null ||
@@ -350,5 +356,9 @@ public class FoodService {
                 .findFirst()
                 .map(BooHeeFoodResponse.Calory::getValueNum)
                 .orElse(null);
+    }
+    public Food findFoodByFoodCode(String code){
+       return foodRepository.findByCode(code)
+               .orElseThrow(()->new BusinessException("食物不存在！"));
     }
 }
