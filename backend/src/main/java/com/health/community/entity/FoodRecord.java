@@ -34,6 +34,9 @@ public class FoodRecord {
     @Column(nullable = false)
     private LocalDateTime recordTime;        // 记录日期（如 2025-04-05）
     @Column(nullable = false)
+    private String name;
+    private String imageUrl;
+    @Column(nullable = false)
     private String foodCode;             // 关联 Food.code
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -42,7 +45,8 @@ public class FoodRecord {
     private Double weight;// 摄入重量（克）
     @Column(nullable = false)
     private Boolean isLiquid;// 根据字段判断显示ml还是g
-
+    @Column
+    private Integer healthLight;
     // 冗余字段：保存时计算并持久化，避免每次查 Food 表
     @Column(nullable = false)
     private Double calories;             // = food.caloriesPer100g * weight / 100

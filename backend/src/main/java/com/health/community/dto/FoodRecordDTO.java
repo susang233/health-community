@@ -19,12 +19,13 @@ import java.time.LocalDateTime;
 public class FoodRecordDTO {
 
     private Long id;
-    @Column(nullable = false)
-    private String username;                 // 用户名
+
     @Column(nullable = false)
     private LocalDateTime recordTime;        // 记录日期+用餐时间，由前端拼接传回，用餐时间可空
     @Column(nullable = false)
     private String foodCode;             // 关联 Food.code
+    @Column(nullable = false)
+    private String name;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MealType mealType;           // BREAKFAST, LUNCH, DINNER, SNACK

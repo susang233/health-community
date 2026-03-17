@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Builder
 public class HealthProfileVO implements Serializable {
 
-    private String username;
+
     private Gender gender;
     private Integer height; // cm
     private LocalDate birthday; // Java 8+

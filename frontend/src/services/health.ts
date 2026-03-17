@@ -6,8 +6,8 @@ import type { AssessmentData, AssessmentResult } from '@/types/assessment';
 
 
 
-export const checkHealthProfile = (username:string) =>
-  api.get('/user/health/check-profile', { params: { username } });
+export const checkHealthProfile = () =>
+  api.get('/user/health/check-profile');
 
 
 export const saveHealthProfile =(data: AssessmentData)  :Promise<AssessmentResult>=>

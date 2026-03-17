@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Integer> {
     // 根据用户名查询（JPA自动实现）
     Optional<User> findByUsername(String username);
-
+    Optional<User> findByUserId(Integer userId);
     // 检查用户名是否存在
     boolean existsByUsername(String username);
 

@@ -19,7 +19,7 @@ export const useHealthProfile = () => {
         navigate('/login');
         return;
       }
-      const res = await checkHealthProfile(username);
+      const res = await checkHealthProfile();
       setHasProfile(res);
     } catch (error) {
       message.error(error.message || '获取健康档案失败');

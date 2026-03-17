@@ -1,5 +1,6 @@
 package com.health.community.service;
 
+import com.health.community.common.context.UserContext;
 import com.health.community.common.enumeration.ActivityLevel;
 import com.health.community.common.enumeration.Gender;
 
@@ -7,7 +8,7 @@ import com.health.community.common.exception.BusinessException;
 import com.health.community.dto.HealthProfileDTO;
 import com.health.community.entity.HealthProfile;
 import com.health.community.entity.User;
-import com.health.community.repository.HealthProgileRepository;
+import com.health.community.repository.HealthProfileRepository;
 import com.health.community.repository.UserRepository;
 import com.health.community.vo.HealthProfileVO;
 import jakarta.validation.Valid;
@@ -25,18 +26,18 @@ import static com.health.community.common.constant.MessageConstant.ACCOUNT_OR_PA
 @RequiredArgsConstructor // 自动生成构造器
 public class HealthService {
     private final UserRepository userRepository;
-    private final HealthProgileRepository healthProgileRepository;
+    private final HealthProfileRepository healthProfileRepository;
     private static final double WEIGHT_TOLERANCE = 0.05; // 允许 50 克误差
 
 
 
     //用于在未完善健康档案前对相关功能进行限制
-    public boolean isProfileCompleted(String username) {
+    public boolean isProfileCompleted() {
+        Integer userId = UserContext.getCurrentUserId();
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new BusinessException(ACCOUNT_OR_PASSWORD_ERROR));
+
         //使用userId再去查询
-        return healthProgileRepository.existsByUserId(user.getUserId());
+        return healthProfileRepository.existsByUserId(userId);
     }
     private void validateHealthData(HealthProfileDTO dto) {
         // 1. 基本范围校验（和 DTO 重复，但为了安全）
@@ -62,9 +63,9 @@ public class HealthService {
 
     public HealthProfileVO saveHealthProfile(@Valid HealthProfileDTO healthProfileDTO) {
         log.info("health",healthProfileDTO);
-        //提取dto里的username，通过username在user里查询到userId
-        String username = healthProfileDTO.getUsername();
-        User user = userRepository.findByUsername(username)
+
+        Integer userId = UserContext.getCurrentUserId();
+        User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new BusinessException(ACCOUNT_OR_PASSWORD_ERROR));
         //计算tdee 和bmi，bmr，推荐热量
         //bmi
@@ -127,7 +128,7 @@ public class HealthService {
 
         //通过userId查询该用户是否有健康档案
 
-        Optional<HealthProfile> existingOpt = healthProgileRepository.findByUserId(user.getUserId());
+        Optional<HealthProfile> existingOpt = healthProfileRepository.findByUserId(user.getUserId());
         //有健康档案，则更新数据
         if(existingOpt.isPresent()){
             // 通过 userId 查询健康档案
@@ -146,7 +147,7 @@ public class HealthService {
             existing.setTdee(tdee);
             existing.setRecommendedCalories(recommendedCalories);
 
-            healthProgileRepository.save(existing); // JPA 会自动 update
+            healthProfileRepository.save(existing); // JPA 会自动 update
 
         }else{
             //无健康档案，插入数据
@@ -163,7 +164,7 @@ public class HealthService {
                     .tdee(tdee)
                     .recommendedCalories(recommendedCalories)
                     .build();
-            healthProgileRepository.save(healthProfile);
+            healthProfileRepository.save(healthProfile);
             log.info("健康档案保存成功: userId={}, 目标={}, 推荐热量={}",
                     user.getUserId(),
                     targetWeight < currentWeight ? "减重" :
@@ -178,7 +179,7 @@ public class HealthService {
 
         //返回vo
         return HealthProfileVO.builder()
-                .username(username)
+
                 .gender(gender)
                 .height(height)
                 .birthday(healthProfileDTO.getBirthday())
@@ -191,4 +192,12 @@ public class HealthService {
                 .recommendedCalories(recommendedCalories)
                 .build();
     }
+
+public Integer getRecommendedCalories(Integer userId){
+
+        return healthProfileRepository.findByUserId(userId)
+                .map(HealthProfile::getRecommendedCalories)
+                .orElseThrow(() -> new BusinessException("请先完善健康档案"));
+
+}
 }

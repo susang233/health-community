@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository
-public interface HealthProgileRepository extends JpaRepository<HealthProfile, Integer> {
+public interface HealthProfileRepository extends JpaRepository<HealthProfile, Integer> {
     // 根据用户名查询（JPA自动实现）
     Optional<HealthProfile> findByUserId(Integer userId);
 

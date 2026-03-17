@@ -1,10 +1,12 @@
 package com.health.community.vo;
 
 import com.health.community.common.enumeration.MealType;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
-
+import java.time.LocalDateTime;
+@Builder
 @Data
 public class FoodRecordVO {
     private Long id;                // 记录ID（用于编辑/删除）

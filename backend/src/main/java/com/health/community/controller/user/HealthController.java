@@ -36,11 +36,9 @@ public class HealthController {
             summary = "检查健康档案存在"
     )
     @GetMapping("/check-profile")
-    public Result checkHealthProfile(@RequestParam
-                                         @NotBlank(message = CODE_CAN_NOT_BE_NULL)
-                                         String username){
+    public Result checkHealthProfile(){
 
-        return Result.success(healthService.isProfileCompleted(username));
+        return Result.success(healthService.isProfileCompleted());
 
     }
 
