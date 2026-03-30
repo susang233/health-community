@@ -54,6 +54,11 @@ public class FoodRecord {
     private Double fat;         // = food.fatPer100g * weight / 100
     private Double carbs;       // = food.carbsPer100g * weight / 100
 
+    private Double caloriesPer100g;//每百克热量，用于前端实时计算展示
+
+    private Double proteinPer100g;
+    private Double fatPer100g;
+    private Double carbsPer100g;
     @CreatedDate
     private LocalDateTime createTime;
 

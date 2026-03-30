@@ -6,8 +6,6 @@ import com.health.community.common.context.UserContext;
 import com.health.community.common.enumeration.MealType;
 import com.health.community.common.exception.BusinessException;
 import com.health.community.common.util.CacheKeyUtils;
-import com.health.community.common.util.JwtUtils;
-import com.health.community.dto.DietRecordDTO;
 import com.health.community.dto.FoodRecordDTO;
 import com.health.community.entity.Food;
 
@@ -27,7 +25,6 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -95,6 +92,11 @@ public class FoodRecordService {
                     .healthLight(food.getHealthLight())
                     .fat(fat)
                     .carbs(carbs)
+
+                    .caloriesPer100g(food.getCaloriesPer100g())
+                    .proteinPer100g(food.getProteinPer100g())
+                    .fatPer100g(food.getFatPer100g())
+                    .carbsPer100g(food.getCarbsPer100g())
                     .build());
             //要不要存到redis？
             log.info("保存成功");
@@ -114,6 +116,7 @@ public class FoodRecordService {
             existing.setProtein(protein);
             existing.setFat(fat);
             existing.setCarbs(carbs);
+
             //修改后要清除记录当天的缓存
 
             foodRecordRepository.save(existing);
@@ -163,7 +166,7 @@ public class FoodRecordService {
      * @param recordDate
      * @return
      */
-    public DailyDietVO getDailyDietVO(LocalDate recordDate){
+    public DailyDietVO getDailyDiet(LocalDate recordDate){
         //redis查询
         Integer userId = UserContext.getCurrentUserId();
         // 提取日期部分
@@ -305,6 +308,7 @@ public class FoodRecordService {
                 .carbs(actualCarbs)
                 .build();
         return DailyDietVO.builder()
+                .actualCalories(actualCalories)
                 .recommendedCalories(recommendedCalories)
                 .remainingCalories(roundedRemaining)
                 .nutritionGoal(calculateNutritionGoal(recommendedCalories))
@@ -343,7 +347,11 @@ public class FoodRecordService {
                 .fat(record.getFat())
                 .carbs(record.getCarbs())
                 .healthLight(record.getHealthLight())
-                .recordDate(record.getRecordTime().toLocalDate()).build();
+                .caloriesPer100g(record.getCaloriesPer100g())
+                .proteinPer100g(record.getProteinPer100g())
+                .fatPer100g(record.getFatPer100g())
+                .carbsPer100g(record.getCarbsPer100g())
+                .recordTime(record.getRecordTime()).build();
     }
 
     /**
@@ -405,6 +413,15 @@ public class FoodRecordService {
                 .protein(Math.round(proteinGrams * 10) / 10.0)
                 .fat(Math.round(fatGrams * 10) / 10.0)
                 .carbs(Math.round(carbsGrams * 10) / 10.0)
+                .build();
+    }
+
+    public DailySummaryVO getDailySummary(){
+        DailyDietVO dailyDietVO = getDailyDiet(LocalDate.now());
+        return DailySummaryVO.builder()
+                .remainingCalories(dailyDietVO.getRemainingCalories())
+                .nutritionGoal(dailyDietVO.getNutritionGoal())
+                .actualIntake(dailyDietVO.getActualIntake())
                 .build();
     }
 }

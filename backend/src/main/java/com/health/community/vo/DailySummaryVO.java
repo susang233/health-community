@@ -5,12 +5,12 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.util.List;
+
 @Data
 @Builder
 
-public class DailyDietVO {
-    // 顶部概览
-    private Integer recommendedCalories;//推荐的热量
+public class DailySummaryVO {
+
 
 
     private Double remainingCalories; // 还可以吃
@@ -21,8 +21,5 @@ public class DailyDietVO {
     // 实际摄入（后端聚合）
     private ActualIntake actualIntake; // { protein: xx g, ... }g
 
-    // 按餐别分组
-    private List<MealRecordVO> meals; // 仅包含有数据的餐别
 
-    private LocalDate recordDate;
 }

@@ -9,7 +9,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
+import org.springframework.web.cors.CorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -26,16 +26,18 @@ public class SecurityConfig {
      * 关键！禁用 Spring Security 的请求拦截
      * 允许所有请求通过，交由你自己的 LoginInterceptor 处理
      */
+    // 你的 Security 配置类
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // 关闭 CSRF（开发常用）
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 无状态
+                .cors(cors -> cors.configurationSource(corsConfigurationSource)) // 👈 注入 Bean
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-                        .anyRequest().permitAll() // ← 所有请求都放行！
+                        .anyRequest().permitAll() // ✅ 保持原样
                 )
-                .httpBasic(httpBasic -> httpBasic.disable()) // 禁用 Basic 认证
-                .formLogin(formLogin -> formLogin.disable()); // 禁用表单登录
+                .httpBasic(httpBasic -> httpBasic.disable())
+                .formLogin(formLogin -> formLogin.disable());
 
         return http.build();
     }

@@ -12,7 +12,7 @@ public class DailyDietVO {
     // 顶部概览
     private Integer recommendedCalories;//推荐的热量
 
-
+    private Double actualCalories;
     private Double remainingCalories; // 还可以吃
 
     // 营养目标（后端计算）

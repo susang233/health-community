@@ -24,7 +24,7 @@ export interface AssessmentResult {
   bmr: number;
   tdee: number;
   recommendedCalories: number;
-  // ...其他字段
+  
 }
 
  
