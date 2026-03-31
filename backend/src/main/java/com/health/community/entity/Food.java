@@ -24,7 +24,7 @@ public class Food {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)  // 保证 code 不重复
+    @Column(unique = true, nullable = false) // 保证 code 不重复
     private String code;
 
     @Column(nullable = false)
@@ -36,9 +36,11 @@ public class Food {
 
     @Column(name = "calories_per_100g", nullable = false)
     private Double caloriesPer100g;
-
+    @Column(name = "protein_per_100g")
     private Double proteinPer100g;
+    @Column(name = "fat_per_100g")
     private Double fatPer100g;
+    @Column(name = "carbs_per_100g")
     private Double carbsPer100g;
 
     private Boolean isLiquid;  // 决定单位显示
@@ -47,7 +49,7 @@ public class Food {
     @CreatedDate
     private LocalDateTime createTime;
 
-    @Column
+    @Column(nullable = false)
     @LastModifiedDate
     private LocalDateTime updateTime;
 

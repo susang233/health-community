@@ -17,14 +17,18 @@ spring:
 
   # JPA 通用配置
   jpa:
+    show-sql: true
     open-in-view: false  # 建议关闭，避免LazyInitializationException
     properties:
       hibernate:
         format_sql: true
+        default_schema: PUBLIC
+        globally_quoted_identifiers: false
         jdbc:
           batch_size: 20
         order_inserts: true
         order_updates: true
+
   data:
     redis:
       host: localhost
@@ -38,7 +42,8 @@ spring:
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-
+  level:
+    org.flywaydb: DEBUG
 
 app:
   cors:

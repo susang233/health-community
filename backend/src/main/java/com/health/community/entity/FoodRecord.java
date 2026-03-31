@@ -54,14 +54,20 @@ public class FoodRecord {
     private Double fat;         // = food.fatPer100g * weight / 100
     private Double carbs;       // = food.carbsPer100g * weight / 100
 
-    private Double caloriesPer100g;//每百克热量，用于前端实时计算展示
-
+    @Column(name = "calories_per_100g", nullable = false)
+    private Double caloriesPer100g;
+    @Column(name = "protein_per_100g")
     private Double proteinPer100g;
+    @Column(name = "fat_per_100g")
     private Double fatPer100g;
+    @Column(name = "carbs_per_100g")
     private Double carbsPer100g;
+
     @CreatedDate
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createTime;
 
     @LastModifiedDate
+    @Column(nullable = false)
     private LocalDateTime updateTime;
 }

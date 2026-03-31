@@ -34,7 +34,7 @@ public class HealthProfile implements Serializable {
     private Integer userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private Gender gender;
 
     @Column(nullable = false)
@@ -44,7 +44,7 @@ public class HealthProfile implements Serializable {
     private LocalDate birthday; // Java 8+
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private ActivityLevel activityLevel;
 
     @Column(nullable = false)
@@ -64,9 +64,11 @@ public class HealthProfile implements Serializable {
     private Integer recommendedCalories;
 
     @CreatedDate
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createTime;
 
     @LastModifiedDate
+    @Column(nullable = false)
     private LocalDateTime updateTime;
 
     public int getAge() {
