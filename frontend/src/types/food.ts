@@ -93,8 +93,16 @@ export type FoodDetailVO = {
   carbsPer100g?: number;
 };
 
-// 搜索结果也用这个类型（缺失字段运行时为 undefined）
+export interface FoodVO {
+  code: string; 
+  name: string;
+  imageUrl?: string;
+  caloriesPer100g: number;
+  isLiquid: boolean;
+  healthLight?: number;
+}
+
 export interface FoodSearchVO {
   page: number;
-  foods: FoodDetailVO[]; // 统一类型
+  foods: FoodVO[]; 
 }

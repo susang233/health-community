@@ -263,7 +263,9 @@ public class FoodRecordService {
 
 
     }
-
+    private double roundToOneDecimal(double value) {
+        return Math.round(value * 10) / 10.0;
+    }
     private DailyDietVO buildDailyDietVO(LocalDate recordDate, List<MealRecordVO> mealVOs, Integer recommendedCalories) {
 
         /**
@@ -287,20 +289,22 @@ public class FoodRecordService {
                 .sum(); // 求和
 
         double remaining = recommendedCalories - actualCalories; // = -150
-        Double roundedRemaining = Math.round(remaining * 10) / 10.0;
+
+        double roundedRemaining = roundToOneDecimal(remaining);
 
 
-        Double actualProtein = mealVOs.stream()
-                .mapToDouble(MealRecordVO::getActualProtein) // 转为 double 流
-                .sum(); // 求和
 
-        Double actualFat = mealVOs.stream()
-                .mapToDouble(MealRecordVO::getActualFat) // 转为 double 流
-                .sum(); // 求和
+        Double actualProtein = roundToOneDecimal(
+                mealVOs.stream().mapToDouble(MealRecordVO::getActualProtein).sum()
+        );
 
-        Double actualCarbs = mealVOs.stream()
-                .mapToDouble(MealRecordVO::getActualCarbs) // 转为 double 流
-                .sum(); // 求和
+        double actualFat = roundToOneDecimal(
+                mealVOs.stream().mapToDouble(MealRecordVO::getActualFat).sum()
+        );
+        double actualCarbs = roundToOneDecimal(
+                mealVOs.stream().mapToDouble(MealRecordVO::getActualCarbs).sum()
+        );
+
 
         ActualIntake actualIntake = ActualIntake.builder()
                 .protein(actualProtein)

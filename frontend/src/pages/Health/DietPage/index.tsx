@@ -292,6 +292,9 @@ const handleSelectFood = async (basicFood: { code: string; name: string; imageUr
     message.error("获取食物详情失败");
   }
 };
+const [searchModalOpen, setSearchModalOpen] = useState(false);
+  
+  
   return (
     <div>
       <div
@@ -310,6 +313,11 @@ const handleSelectFood = async (basicFood: { code: string; name: string; imageUr
         <Button type="primary" icon={<SearchOutlined /> }  onClick={() => setSearchModalOpen(true)}>
         搜索食物
       </Button>
+      <FoodSearchModal
+  open={searchModalOpen}
+  onCancel={() => setSearchModalOpen(false)}
+  onSelect={handleSelectFood}
+/>
       </div>
       {dailyDiet ? (
         <Card>
@@ -323,7 +331,7 @@ const handleSelectFood = async (basicFood: { code: string; name: string; imageUr
                 format={() => (
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontSize: "12px", color: "#888" }}>
-                      {isOverLimit ? "已超量" : "还可摄入"}
+                      {isOverLimit ? "已超量" : "还可以吃"}
                     </div>
                     <div
                       style={{
@@ -411,7 +419,7 @@ const handleSelectFood = async (basicFood: { code: string; name: string; imageUr
         />
       )}
 
-      <FoodSearchModal onSelect={handleSelectFood} />
+     
     </div>
   );
 }

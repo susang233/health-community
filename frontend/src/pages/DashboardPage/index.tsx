@@ -49,14 +49,17 @@ const DietCard = ({ hasProfile }: { hasProfile: boolean }) => {
       </ClickableCard>
     );
   }
-
+  const remainingCalories = dailySummary?.remainingCalories ?? 0;
+const isOverLimit = remainingCalories < 0;
   return (
     <ClickableCard to="/dashboard/health/diet" title="饮食热量">
       <div style={{display:'flex',justifyContent: "space-between"}}>
         <div style={{justifyContent:"center",marginLeft: 50}}>
-          <div style={{color: "#828782"}}>还可吃</div>
+           <div style={{ fontSize: "12px", color: "#888" }}>
+                      {isOverLimit ? "已超量" : "还可摄入"}
+                    </div>
           <div >
-            <span style={{ fontSize: "18px", fontWeight: "bold" }}>{dailySummary.remainingCalories}</span>
+            <span style={{ fontSize: "18px", fontWeight: "bold" }}>{Math.abs(Math.round(remainingCalories))}</span>
             <span style={{color: "#828782"}}> 千卡</span>
           </div>
         </div>
