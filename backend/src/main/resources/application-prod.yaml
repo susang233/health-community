@@ -65,6 +65,20 @@ app:
   cors:
     allowed-origins:
 
+  post:
+    allowed-image-domains:
+
+  oss:
+    endpoint:
+    bucket:
+    access-key: ${OSS_ACCESS_KEY}
+    secret-key: ${OSS_SECRET_KEY}
+
+  file:
+    cdn-domain: https://cdn.yoursite.com
+
+
+
 springdoc:
   swagger-ui:
     enabled: false

@@ -34,11 +34,10 @@ public class HealthService {
     //用于在未完善健康档案前对相关功能进行限制
     public boolean isProfileCompleted() {
         Integer userId = UserContext.getCurrentUserId();
-
-
         //使用userId再去查询
         return healthProfileRepository.existsByUserId(userId);
     }
+
     private void validateHealthData(HealthProfileDTO dto) {
         // 1. 基本范围校验（和 DTO 重复，但为了安全）
         if (dto.getHeight() < 100 || dto.getHeight() > 230) {
@@ -174,9 +173,6 @@ public class HealthService {
         }
 
 
-
-
-
         //返回vo
         return HealthProfileVO.builder()
 
@@ -200,4 +196,31 @@ public Integer getRecommendedCalories(Integer userId){
                 .orElseThrow(() -> new BusinessException("请先完善健康档案"));
 
 }
+
+    public HealthProfileVO getHealthProfile() {
+        try{
+            Integer currentUserId = UserContext.getCurrentUserId();
+            if (currentUserId == null) {
+                throw new BusinessException("未登录！");
+            }
+            HealthProfile healthProfile = healthProfileRepository.findByUserId(currentUserId)
+
+                    .orElseThrow(() -> new BusinessException("请先完善健康档案"));
+            return HealthProfileVO.builder().gender(healthProfile.getGender())
+                    .height(healthProfile.getHeight())
+                    .birthday(healthProfile.getBirthday())
+                    .activityLevel(healthProfile.getActivityLevel())
+                    .currentWeight(healthProfile.getCurrentWeight())
+                    .targetWeight(healthProfile.getTargetWeight())
+                    .bmi(healthProfile.getBmi())
+                    .bmr(healthProfile.getBmr())
+                    .tdee(healthProfile.getTdee())
+                    .recommendedCalories(healthProfile.getRecommendedCalories())
+                    .build();
+        } catch (Exception e) {
+            throw new BusinessException("获取个人资料失败");
+        }
+
+
+    }
 }

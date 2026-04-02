@@ -12,9 +12,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import static com.health.community.common.constant.MessageConstant.CODE_CAN_NOT_BE_NULL;
 
@@ -52,4 +54,17 @@ public class UserController{
         return Result.success(authService.login(loginDTO, Role.USER));
 
     }
+
+    @PostMapping("/upload-avatar")
+    public Result<Boolean> uploadAvatar(@RequestParam MultipartFile file) {
+
+        return Result.success(userService.uploadAvatar(file));
+    }
+
+    @PostMapping("/update-nick-name")
+    public Result<Boolean> updateNickName(@RequestParam @Size(min = 1, max = 20,message = CODE_CAN_NOT_BE_NULL)String nickName) {
+
+        return Result.success(userService.updateNickName(nickName));
+    }
 }
+

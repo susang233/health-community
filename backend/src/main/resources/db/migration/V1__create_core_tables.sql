@@ -4,6 +4,7 @@ CREATE TABLE hc_user (
                          password VARCHAR(255) NOT NULL,
                          nick_name VARCHAR(20) NOT NULL,
                          role VARCHAR(20) NOT NULL DEFAULT 'USER',
+                         avatar_url VARCHAR(255),
                          create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
                          update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );

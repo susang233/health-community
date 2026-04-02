@@ -42,7 +42,8 @@ public class User implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false,length = 20)
     private Role role = Role.USER;  // 默认值
-
+    @Column(name = "avatar_url", length = 255)
+    private String avatarUrl;
     @Column(nullable = false, updatable = false)
     @CreatedDate
     private LocalDateTime createTime;

@@ -10,8 +10,7 @@ import java.time.LocalDate;
 @Data
 public class HealthProfileDTO implements Serializable {
 
-    @NotBlank(message = "账号不能为空")
-    private String username;
+
 
     @NotNull(message = "性别不能为空")
     private Gender gender;

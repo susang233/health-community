@@ -1,6 +1,14 @@
 # ========================
 # 开发环境配置（DEV）
 # ========================
+app:
+  post:
+    allowed-image-domains:
+      - "http://localhost:9000/health-community-dev/"        # 本地 MinIO
+
+
+
+
 spring:
   # 数据源（H2）
   datasource:

@@ -6,7 +6,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "hc_post_image")
+@Table(name = "hc_post_image", indexes = {
+        @Index(name = "idx_image_post_id", columnList = "post_id")
+})
 @Data
 @Builder
 @NoArgsConstructor

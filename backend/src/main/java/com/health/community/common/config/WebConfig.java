@@ -10,6 +10,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.List;
@@ -74,6 +75,15 @@ public class WebConfig implements WebMvcConfigurer {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // 映射 /avatars/** 到本地 uploads/avatars 目录
+        registry.addResourceHandler("/avatars/**")
+                .addResourceLocations("file:uploads/avatars/");
+        // 显式添加默认静态资源路径
+        registry.addResourceHandler("/**")
+                .addResourceLocations("classpath:/static/");
     }
 
 }

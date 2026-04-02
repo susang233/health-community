@@ -22,6 +22,11 @@ CREATE TABLE hc_post_image
     image_url  VARCHAR(500) NOT NULL,
     sort_index INT          NOT NULL
 );
+CREATE INDEX idx_post_user_id ON hc_post (user_id);
+CREATE INDEX idx_post_status ON hc_post (status);
+CREATE INDEX idx_post_create_time ON hc_post (create_time DESC);
+CREATE INDEX idx_image_post_id ON hc_post_image (post_id);
+
 
 -- 评论
 CREATE TABLE hc_comment

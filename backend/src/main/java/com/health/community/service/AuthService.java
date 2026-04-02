@@ -64,6 +64,7 @@ public class AuthService {
                 .username(user.getUsername())
                 .nickname(user.getNickName())
                 .role(user.getRole().name())
+                .avatar(user.getAvatarUrl())
                 .expiresIn(loginDTO.isRememberMe()? jwtProperties.getLongTtl() /1000: jwtProperties.getShortTtl()/1000)
                 .build();
 

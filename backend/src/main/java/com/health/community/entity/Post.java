@@ -12,7 +12,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "hc_post")
+@Table(name = "hc_post", indexes = {
+        @Index(name = "idx_post_user_id", columnList = "user_id"),
+        @Index(name = "idx_post_status", columnList = "status"),
+        @Index(name = "idx_post_create_time", columnList = "create_time DESC")
+})
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -38,9 +43,11 @@ public class Post {
     private String rejectReason; // 审核拒绝原因（可为空）
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer likeCount = 0; // 缓存点赞数（避免 COUNT）
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer commentCount = 0; // 缓存评论数
 
     @CreatedDate

@@ -23,7 +23,7 @@ public class HealthController {
 
 
     @Operation(
-            summary = "保存健康档案"
+            summary = "保存修改健康档案"
     )
     @PostMapping("/profile")
     public Result<HealthProfileVO> saveHealthProfile(@Valid @RequestBody HealthProfileDTO healthProfileDTO){
@@ -36,9 +36,19 @@ public class HealthController {
             summary = "检查健康档案存在"
     )
     @GetMapping("/check-profile")
-    public Result checkHealthProfile(){
+    public Result<Boolean> checkHealthProfile(){
 
         return Result.success(healthService.isProfileCompleted());
+
+    }
+
+    @Operation(
+            summary = "获取健康档案"
+    )
+    @GetMapping("/profile")
+    public Result<HealthProfileVO> getHealthProfile(){
+
+        return Result.success(healthService.getHealthProfile());
 
     }
 
