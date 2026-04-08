@@ -28,6 +28,9 @@ public class UserController{
     private final UserService userService;
     private final AuthService authService;
 
+    @Operation(
+            summary = "检查账号唯一性"
+    )
     @GetMapping("/check-username")
     public  Result<Boolean> checkUsername(@RequestParam
                                               @NotBlank(message = CODE_CAN_NOT_BE_NULL)
@@ -55,12 +58,18 @@ public class UserController{
 
     }
 
+    @Operation(
+            summary = "修改头像"
+    )
     @PostMapping("/upload-avatar")
     public Result<Boolean> uploadAvatar(@RequestParam MultipartFile file) {
 
         return Result.success(userService.uploadAvatar(file));
     }
 
+    @Operation(
+            summary = "修改昵称"
+    )
     @PostMapping("/update-nick-name")
     public Result<Boolean> updateNickName(@RequestParam @Size(min = 1, max = 20,message = CODE_CAN_NOT_BE_NULL)String nickName) {
 

@@ -23,4 +23,6 @@ public interface PostImageRepository extends JpaRepository<PostImage, Long> {
     // 按排序字段升序返回，避免 Java 层再排序
     @Query("SELECT p FROM PostImage p WHERE p.postId IN :postIds ORDER BY p.sortIndex ASC")
     List<PostImage> findByPostIdInOrderBySortIndexAsc(@Param("postIds") List<Long> postIds);
+
+    void deleteByPostId(Long postId);
 }

@@ -3,6 +3,7 @@ package com.health.community.controller.user;
 import com.health.community.common.enumeration.PostListType;
 import com.health.community.common.result.Result;
 import com.health.community.dto.PostCreateDTO;
+import com.health.community.dto.PostDTO;
 import com.health.community.service.FileStorageService;
 import com.health.community.service.PostService;
 import com.health.community.vo.PostVO;
@@ -54,6 +55,9 @@ public class PostController {
 
         return Result.success(urls);
     }
+    @Operation(
+            summary = "获取帖子列表"
+    )
     @GetMapping("/index")
     public Result<List<PostVO>> getPostList(
             @RequestParam(defaultValue = "RECOMMEND") PostListType type,
@@ -62,10 +66,33 @@ public class PostController {
     ) {
         return Result.success(postService.getPostList(type, page));
     }
+    @Operation(
+            summary = "获取用户主页帖子列表"
+    )
     @GetMapping
     public Result<UserPostVO> getUserPosts(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(required = false) Integer userId
-    ){return Result.success(postService.getUserPostList(page,userId));}
+    ) {
+        return Result.success(postService.getUserPostList(page, userId));
+    }
+    @Operation(
+            summary = "编辑帖子"
+    )
+    @PutMapping
+    public Result<Boolean> updatePost(@RequestBody PostDTO postDTO) {
+
+        return Result.success(postService.updatePost(postDTO));
+    }
+    @Operation(
+            summary = "删除帖子"
+    )
+    @DeleteMapping("/{postId}")
+    public Result<Boolean> deletePost(@PathVariable Long postId) {
+
+        return Result.success(postService.deletePost(postId));
+
+    }
+
 
 }

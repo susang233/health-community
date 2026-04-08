@@ -1,24 +1,15 @@
 package com.health.community.controller.user;
-
-import com.health.community.common.enumeration.PostListType;
 import com.health.community.common.result.Result;
-import com.health.community.dto.PostCreateDTO;
-import com.health.community.service.FileStorageService;
 import com.health.community.service.FollowService;
-import com.health.community.service.PostService;
-import com.health.community.vo.PostVO;
-import com.health.community.vo.UserPostVO;
+import com.health.community.vo.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
+
 
 import java.util.List;
-
-import static com.health.community.common.constant.MessageConstant.CODE_CAN_NOT_BE_NULL;
 
 @RestController
 @RequestMapping("/user/follow")
@@ -49,4 +40,26 @@ public class FollowController {
         followService.unfollow( userId);
         return Result.success();
     }
+    /**
+     * 获取当前用户关注的用户列表（我关注的人）
+     * @param page 页码（从1开始）
+     * @return 用户VO列表
+     */
+    @GetMapping("/followees")
+    public Result<List<UserVO>> getFollowees(@RequestParam(defaultValue = "1") int page) {
+        List<UserVO> followees = followService.getFollowee(page);
+        return Result.success(followees);
+    }
+
+    /**
+     * 获取当前用户的粉丝列表（谁关注了我）
+     * @param page 页码（从1开始）
+     * @return 用户VO列表
+     */
+    @GetMapping("/followers")
+    public Result<List<UserVO>> getFollowers(@RequestParam(defaultValue = "1") int page) {
+        List<UserVO> followers = followService.getFollower(page);
+        return Result.success(followers);
+    }
+
 }

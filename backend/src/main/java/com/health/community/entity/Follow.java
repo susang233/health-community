@@ -14,6 +14,10 @@ import java.time.LocalDateTime;
 
 @Table(
         name = "hc_follow",
+        indexes = {
+                @Index(name = "idx_follower", columnList = "follower_id"),
+                @Index(name = "idx_followee", columnList = "followee_id")
+        },
         uniqueConstraints = {
                 @UniqueConstraint(columnNames = {"follower_id", "followee_id"})
         }

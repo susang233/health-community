@@ -23,7 +23,12 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
     @Query("SELECT f.followeeId FROM Follow f WHERE f.followerId = :followerId")
     List<Integer> findFolloweeIdsByFollowerId(@Param("followerId") Integer followerId);
 
-    // 分页查询关注列表（用于“我的关注”页面）
-    Page<Follow> findByFollowerId(Integer followerId, Pageable pageable);
+
+    @Query("SELECT f.followeeId FROM Follow f WHERE f.followerId = :followerId ORDER BY f.createTime DESC")
+    Page<Integer> findFolloweeIdsByFollowerId(@Param("followerId") Integer followerId, Pageable pageable);
+
+
+    @Query("SELECT f.followerId FROM Follow f WHERE f.followeeId = :followeeId ORDER BY f.createTime DESC")
+    Page<Integer> findFollowerIdsByFolloweeId(@Param("followeeId")Integer followeeId, Pageable pageable);
 }
 

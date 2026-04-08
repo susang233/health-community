@@ -9,6 +9,7 @@ import com.health.community.common.exception.BusinessException;
 import com.health.community.common.properties.AppProperties;
 import com.health.community.dto.PostCreateDTO;
 
+import com.health.community.dto.PostDTO;
 import com.health.community.entity.*;
 
 import com.health.community.repository.PostImageRepository;
@@ -28,14 +29,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
 
-import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static com.health.community.common.constant.SizeConstant.PAGE_SIZE;
 
 @Slf4j
 @Service
@@ -48,7 +49,7 @@ public class PostService {
     private final UserService userService;
     private final HealthService healthService;
     private final TagSettingService tagSettingService;
-    private static final int PAGE_SIZE = 20;
+
     private final FollowService followService;
 
     @Transactional
@@ -281,5 +282,84 @@ public class PostService {
         return postPage.getContent().stream()
                 .map(post -> convertToPostVO(post, imageMap, userMap, healthMap, tagSettingMap))
                 .toList();
+    }
+
+    public boolean updatePost( PostDTO postDTO) {
+        Integer currentUserId = UserContext.getCurrentUserId();
+        Long postId = postDTO.getId();
+
+        // 查询帖子并校验归属
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException("帖子不存在"));
+
+        if (!post.getUserId().equals(currentUserId)) {
+            throw new BusinessException("无权编辑该帖子");
+        }
+
+
+
+        //  更新内容
+        post.setContent(postDTO.getContent());
+        //非审核状态需要重新进入审核状态
+        if (post.getStatus() != PostStatus.PENDING) {
+            post.setStatus(PostStatus.PENDING);
+
+        }
+
+        post = postRepository.save(post);
+
+        // 替换图片统一处理 null 为 空列表
+        List<String> newImageUrls = Optional.ofNullable(postDTO.getImageUrls()).orElse(Collections.emptyList());
+
+
+        //  校验新图片域名（复用创建逻辑）
+        if ( !newImageUrls.isEmpty()) {
+            List<String> allowedDomains = appProperties.getPost().getAllowedImageDomains();
+            for (String url : newImageUrls) {
+                boolean isValid = allowedDomains.stream()
+                        .anyMatch(domain -> {
+                            String normalizedDomain = domain.endsWith("/") ? domain : domain + "/";
+                            return url.startsWith(normalizedDomain);
+                        });
+                if (!isValid) {
+                    throw new BusinessException("非法图片地址: " + url);
+                }
+            }
+        }
+
+        // 删除旧图片
+        postImageRepository.deleteByPostId(postId);
+
+        //保存新图片
+        if (!newImageUrls.isEmpty()) {
+            Post finalPost = post;
+            List<PostImage> images = IntStream.range(0, newImageUrls.size())
+                    .mapToObj(i -> PostImage.builder()
+                            .postId(finalPost.getId())
+                            .imageUrl(newImageUrls.get(i))
+                            .sortIndex(i)
+                            .build())
+                    .collect(Collectors.toList());
+            postImageRepository.saveAll(images);
+        }
+        return true;
+    }
+    public boolean deletePost(Long postId) {
+        Integer currentUserId = UserContext.getCurrentUserId();
+
+        //  查询并校验归属
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException("帖子不存在"));
+
+        if (!post.getUserId().equals(currentUserId)) {
+            throw new BusinessException("无权删除该帖子");
+        }
+
+        //  先删图片（避免外键约束或残留）
+        postImageRepository.deleteByPostId(postId);
+
+        //  再删帖子
+        postRepository.deleteById(postId);
+        return true;
     }
 }

@@ -58,6 +58,10 @@ CREATE TABLE hc_follow
 );
 CREATE UNIQUE INDEX uk_follower_followee ON hc_follow (follower_id, followee_id);
 
+
+CREATE INDEX idx_follower ON hc_follow (follower_id);
+CREATE INDEX idx_followee ON hc_follow (followee_id);
+
 -- 标签设置
 CREATE TABLE hc_tag_setting
 (

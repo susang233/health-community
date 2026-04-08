@@ -29,6 +29,7 @@ import static com.health.community.common.constant.MessageConstant.ACCOUNT_OR_PA
 @RequiredArgsConstructor // 自动生成构造器
 public class HealthService {
     private final UserRepository userRepository;
+    private final WeightRecordService weightRecordService;
     private final HealthProfileRepository healthProfileRepository;
     private static final double WEIGHT_TOLERANCE = 0.05; // 允许 50 克误差
     private final UserService userService;
@@ -174,6 +175,8 @@ public class HealthService {
 
         }
 
+        // 调用 service 保存当天体重
+        weightRecordService.saveWeightRecord( currentWeight,LocalDate.now()); // ← 核心一行！
 
         //返回vo
         return HealthProfileVO.builder()
