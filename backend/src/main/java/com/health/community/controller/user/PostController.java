@@ -1,11 +1,12 @@
 package com.health.community.controller.user;
 
+import com.health.community.common.enumeration.PostListType;
 import com.health.community.common.result.Result;
 import com.health.community.dto.PostCreateDTO;
-import com.health.community.dto.TagSettingDTO;
 import com.health.community.service.FileStorageService;
 import com.health.community.service.PostService;
-import com.health.community.service.TagSettingService;
+import com.health.community.vo.PostVO;
+import com.health.community.vo.UserPostVO;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class PostController {
     )
     @PostMapping("/create")
     public Result<Long> createPost(@Valid @RequestBody PostCreateDTO postCreateDTO) {
-        return Result.success(postService.createPost( postCreateDTO));
+        return Result.success(postService.createPost(postCreateDTO));
     }
 
     @Operation(
@@ -53,6 +54,18 @@ public class PostController {
 
         return Result.success(urls);
     }
+    @GetMapping("/index")
+    public Result<List<PostVO>> getPostList(
+            @RequestParam(defaultValue = "RECOMMEND") PostListType type,
+            @RequestParam(defaultValue = "0") int page
 
+    ) {
+        return Result.success(postService.getPostList(type, page));
+    }
+    @GetMapping
+    public Result<UserPostVO> getUserPosts(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(required = false) Integer userId
+    ){return Result.success(postService.getUserPostList(page,userId));}
 
 }

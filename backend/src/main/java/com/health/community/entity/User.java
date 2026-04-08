@@ -44,6 +44,17 @@ public class User implements Serializable {
     private Role role = Role.USER;  // 默认值
     @Column(name = "avatar_url", length = 255)
     private String avatarUrl;
+    @Column(name = "followers_count", nullable = false, columnDefinition = "INT DEFAULT 0")
+    private Integer followersCount = 0;
+
+    @Column(name = "following_count", nullable = false, columnDefinition = "INT DEFAULT 0")
+    private Integer followingCount = 0;
+
+    @Column(name = "post_count", nullable = false, columnDefinition = "INT DEFAULT 0")
+    private Integer postCount = 0;
+
+
+
     @Column(nullable = false, updatable = false)
     @CreatedDate
     private LocalDateTime createTime;

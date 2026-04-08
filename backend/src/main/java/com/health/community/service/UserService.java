@@ -6,23 +6,19 @@ import com.health.community.common.properties.AppProperties;
 import com.health.community.dto.RegisterDTO;
 import com.health.community.entity.User;
 import com.health.community.repository.UserRepository;
-import com.health.community.vo.LoginVO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.Set;
-import java.util.UUID;
+import java.util.Collections;
+import java.util.List;
+
+import static com.health.community.common.constant.MessageConstant.ACCOUNT_ERROR;
+import static com.health.community.common.constant.MessageConstant.ACCOUNT_OR_PASSWORD_ERROR;
 
 @Slf4j
 @Service
@@ -33,12 +29,17 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final AppProperties appProperties;
     private final FileStorageService fileStorageService;
-
-    private static final String DEFAULT_AVATAR_URL = "/avatars/default-avatar.png";
+    private final TagSettingService tagSettingService;
+    //private static final String DEFAULT_AVATAR_URL = "/avatars/default-avatar.png";
 
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new BusinessException("用户不存在"));
+                .orElseThrow(() -> new BusinessException(ACCOUNT_OR_PASSWORD_ERROR));
+    }
+
+    public User findByUserId(Integer userId) {
+        return userRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ACCOUNT_ERROR));
     }
 
     // 唯一性校验（供 check-username 接口调用）
@@ -62,8 +63,11 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(registerDTO.getPassword()));
         user.setNickName(generateNickName());
         user.setUsername(registerDTO.getUsername());
-        user.setAvatarUrl(appProperties.getBaseUrl() + DEFAULT_AVATAR_URL);
-        userRepository.save(user);
+        user.setAvatarUrl(null);
+        User save = userRepository.save(user);
+
+        tagSettingService.initTagSetting(save.getUserId());
+
         return user.getUsername();
     }
 
@@ -93,8 +97,9 @@ public class UserService {
             throw new BusinessException("上传失败");
         }
     }
+
     public Boolean updateNickName(String nickName) {
-        try{
+        try {
             Integer currentUserId = UserContext.getCurrentUserId();
             User user = userRepository.findById(currentUserId)
                     .orElseThrow(() -> new RuntimeException("用户不存在"));
@@ -104,10 +109,17 @@ public class UserService {
 
             return true;
 
-        }catch (Exception e){
-            log.error("昵称修改失败",e);
+        } catch (Exception e) {
+            log.error("昵称修改失败", e);
             throw new BusinessException("修改昵称失败");
         }
 
+
+    }
+    public List<User> findByUserIds(List<Integer> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return userRepository.findByUserIdIn(userIds);
     }
 }

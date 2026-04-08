@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -85,6 +86,34 @@ public class TagSettingService {
         }
 
         return new ArrayList<>(tags); // 去重？按需决定
+    }
+    public TagSetting findTagByUserId(Integer userId){
+        return tagSettingRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException("未查询到tag"));
+    }
+
+    public List<TagSetting> findByUserIds(List<Integer> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return tagSettingRepository.findByUserIdIn(userIds);
+    }
+
+    // 顺便优化 init 方法（加判空）
+    public void initTagSetting(Integer userId) {
+        if (userId == null || existsByUserId(userId)) {
+            return;
+        }
+        TagSetting setting = TagSetting.builder()
+                .userId(userId)
+                .display(TagDisplay.SHOW)
+                .tags(new ArrayList<>())
+                .build();
+        tagSettingRepository.save(setting);
+    }
+
+    public boolean existsByUserId(Integer userId) {
+        return tagSettingRepository.existsByUserId(userId);
     }
 }
 

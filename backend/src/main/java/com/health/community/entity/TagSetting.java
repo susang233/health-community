@@ -11,6 +11,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -36,7 +37,8 @@ public class TagSetting {
     @ElementCollection
     @CollectionTable(name = "hc_user_tag", joinColumns = @JoinColumn(name = "tag_setting_id"))
     @Column(name = "tag_name")
-    private List<String> tags; // ["学生党", "健身党"]
+
+    private List<String> tags= new ArrayList<>();; // ["学生党", "健身党"]
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -45,4 +47,15 @@ public class TagSetting {
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime updateTime;
+
+    @Override
+    public String toString() {
+        return "TagSetting{" +
+                "id=" + id +
+                ", userId=" + userId +
+                ", display='" + display + '\'' +
+                ", createTime=" + createTime +
+                ", updateTime=" + updateTime +
+                '}';
+    }
 }

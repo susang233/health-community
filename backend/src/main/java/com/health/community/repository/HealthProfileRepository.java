@@ -6,6 +6,7 @@ import com.health.community.entity.HealthProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -15,6 +16,8 @@ public interface HealthProfileRepository extends JpaRepository<HealthProfile, In
 
     // 检查用户名是否存在
     boolean existsByUserId(Integer userId);
+
+    List<HealthProfile> findByUserIdIn(List<Integer> userIds);
 
 
 

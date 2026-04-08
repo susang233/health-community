@@ -3,6 +3,8 @@ package com.health.community.controller.handler;
 import com.health.community.common.exception.BaseException;
 import com.health.community.common.exception.BusinessException;
 import com.health.community.common.result.Result;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -27,7 +29,22 @@ public class GlobalExceptionHandler {
         return Result.error(400, message);
     }
 
-    // 3. 处理其他未知异常
+
+
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public Result<Void> handleConstraintViolation(ConstraintViolationException ex) {
+
+        String customMessage = ex.getConstraintViolations().stream()
+                .findFirst()
+                .map(ConstraintViolation::getMessage)
+                .orElse("参数校验失败");
+
+
+        log.error("参数校验未通过", ex);
+        return Result.error(400, customMessage);
+    }
+    // 处理其他未知异常
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception e) {
         log.error("系统异常", e);

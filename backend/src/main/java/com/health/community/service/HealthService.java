@@ -17,8 +17,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
+import static com.health.community.common.constant.MessageConstant.ACCOUNT_ERROR;
 import static com.health.community.common.constant.MessageConstant.ACCOUNT_OR_PASSWORD_ERROR;
 
 @Slf4j
@@ -28,7 +31,7 @@ public class HealthService {
     private final UserRepository userRepository;
     private final HealthProfileRepository healthProfileRepository;
     private static final double WEIGHT_TOLERANCE = 0.05; // 允许 50 克误差
-
+    private final UserService userService;
 
 
     //用于在未完善健康档案前对相关功能进行限制
@@ -64,8 +67,7 @@ public class HealthService {
         log.info("health",healthProfileDTO);
 
         Integer userId = UserContext.getCurrentUserId();
-        User user = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new BusinessException(ACCOUNT_OR_PASSWORD_ERROR));
+        User user = userService.findByUserId(userId);
         //计算tdee 和bmi，bmr，推荐热量
         //bmi
         validateHealthData(healthProfileDTO);//校验参数合法性
@@ -222,5 +224,15 @@ public Integer getRecommendedCalories(Integer userId){
         }
 
 
+    }
+    public HealthProfile findHealthProfileByUserId(Integer userId){
+        return healthProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException("请先完善健康档案"));
+    }
+    public List<HealthProfile> findByUserIds(List<Integer> userIds) {
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return healthProfileRepository.findByUserIdIn(userIds);
     }
 }
