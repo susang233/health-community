@@ -6,6 +6,7 @@ import com.health.community.common.properties.AppProperties;
 import com.health.community.dto.RegisterDTO;
 import com.health.community.entity.User;
 import com.health.community.repository.UserRepository;
+import com.health.community.vo.UserVO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -121,5 +122,19 @@ public class UserService {
             return Collections.emptyList();
         }
         return userRepository.findByUserIdIn(userIds);
+    }
+
+    public UserVO findUserVOByUserId(Integer targetUserId) {
+            Integer currentUserId = UserContext.getCurrentUserId(); // 当前登录用户
+            if (targetUserId == null && currentUserId == null) {
+                throw new BusinessException("请先登录");
+            }
+
+            User user = findByUserId(targetUserId);
+        return UserVO.builder().userId(user.getUserId())
+                .avatarUrl(user.getAvatarUrl())
+                .nickName(user.getNickName())
+                .followersCount(user.getFollowersCount())
+                .followingCount(user.getFollowingCount()).build();
     }
 }

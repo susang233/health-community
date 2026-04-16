@@ -44,9 +44,10 @@ export default function DashboardLayout() {
     "/dashboard/health/diet": "饮食记录",
     "/dashboard/health/water": "喝水记录",
     "/dashboard/health/sleep": "睡眠记录",
-    "/dashboard/community/posts": "帖子列表",
-    "/dashboard/community/my-posts": "我的帖子",
-    "/dashboard/community/friends": "好友",
+    "/dashboard/community/recommend": "推荐动态",
+    "/dashboard/community/following": "关注动态",
+    "/dashboard/community/my": "我的帖子",
+    
   };
   const getPageTitle = () => {
     return pageTitleMap[location.pathname] || "健康管理";
@@ -62,6 +63,14 @@ export default function DashboardLayout() {
         // 有档案才跳转到健康模块
         navigate("/dashboard/health/weight");
       });
+    } else if (key === "community") {
+      // 点击"社群"菜单，直接跳转
+      requireProfile(() => {
+        // 有档案才跳转到健康模块
+         navigate("/dashboard/community/recommend");
+      });
+    
+    
     } else {
       // 跳转到模块首页（会自动匹配子路由 index）
       navigate(`/dashboard/${key}`);
@@ -151,7 +160,7 @@ export default function DashboardLayout() {
             minHeight: 280,
           }}
         >
-          {/* 👇 所有子页面通过 Outlet 渲染 */}
+          {/*  所有子页面通过 Outlet 渲染 */}
           <Outlet />
         </Content>
       </Layout>

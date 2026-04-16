@@ -2,13 +2,11 @@ package com.health.community.vo;
 
 import com.health.community.common.enumeration.Gender;
 import com.health.community.common.enumeration.PostStatus;
-
 import com.health.community.entity.PostImage;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -18,7 +16,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor  // 无参构造
 @AllArgsConstructor // 全参构造
-public class PostVO implements Serializable {
+public class PostDetailVO implements Serializable {
 
 
     private Long id;
@@ -27,8 +25,11 @@ public class PostVO implements Serializable {
     private Gender gender;
     private String avatarUrl;
     private String nickName;
+    private Integer height;
+    private Double currentWeight;
+    private Double bmi;
+    private List<String> tags;
 
-    private String profileText;
     private String content; // 帖子文字（最多1000字）
 
 
@@ -40,6 +41,8 @@ public class PostVO implements Serializable {
     private Integer commentCount;// 缓存评论数
     private List<PostImage> postImageList;
     private LocalDateTime createTime;
+
+    private List<CommentListVO> commentListVOS;
 
 
     private LocalDateTime updateTime;

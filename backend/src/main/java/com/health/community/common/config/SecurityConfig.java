@@ -24,9 +24,9 @@ public class SecurityConfig {
 
     /**
      * 关键！禁用 Spring Security 的请求拦截
-     * 允许所有请求通过，交由你自己的 LoginInterceptor 处理
+     * 允许所有请求通过，交由自己的 LoginInterceptor 处理
      */
-    // 你的 Security 配置类
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-                        .anyRequest().permitAll() // ✅ 保持原样
+                        .anyRequest().permitAll()
                 )
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .formLogin(formLogin -> formLogin.disable());

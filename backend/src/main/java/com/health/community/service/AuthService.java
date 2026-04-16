@@ -3,6 +3,7 @@ import com.health.community.common.enumeration.Role;
 import com.health.community.common.exception.BusinessException;
 import com.health.community.common.properties.JwtProperties;
 import com.health.community.common.util.JwtUtils;
+import com.health.community.dto.AdminCreateDTO;
 import com.health.community.dto.LoginDTO;
 
 import com.health.community.entity.User;
@@ -10,6 +11,7 @@ import com.health.community.repository.UserRepository;
 import com.health.community.vo.LoginVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -69,7 +71,70 @@ public class AuthService {
                 .build();
 
     }
+    /**
+     * 管理员统一登录入口（支持 ADMIN / SUPER_ADMIN）
+     */
+    public LoginVO adminLogin(LoginDTO loginDTO) {
+        String username = loginDTO.getUsername();
+        String password = loginDTO.getPassword();
+
+        // 1. 查询用户是否存在
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BusinessException(ACCOUNT_OR_PASSWORD_ERROR));
+
+        // 2. 检查是否为管理员角色（只允许 ADMIN 或 SUPER_ADMIN 登录管理后台）
+        if (user.getRole() != Role.ADMIN && user.getRole() != Role.SUPER_ADMIN) {
+            throw new BusinessException("该账号无管理权限");
+        }
+
+        // 3. 校验密码
+        log.info("输入的密码: {}, 数据库密文: {}", password, user.getPassword());
+        boolean matches = passwordEncoder.matches(password, user.getPassword());
+        log.info("密码匹配结果: {}", matches);
+
+        log.info("PasswordEncoder 类型: {}", passwordEncoder.getClass().getName());
 
 
 
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new BusinessException(ACCOUNT_OR_PASSWORD_ERROR);
+        }
+
+        // 4. 生成 Token 并返回
+        String token = jwtUtils.generateToken(
+                user.getUserId(),
+                user.getRole().name(),
+                loginDTO.isRememberMe()
+        );
+
+        log.info("管理员登录成功: {}, role: {}", user.getUsername(), user.getRole());
+
+        return LoginVO.builder()
+                .token(token)
+                .username(user.getUsername())
+                .nickname(user.getNickName())
+                .role(user.getRole().name())
+                .avatar(user.getAvatarUrl())
+                .expiresIn(loginDTO.isRememberMe() ?
+                        jwtProperties.getLongTtl() / 1000 :
+                        jwtProperties.getShortTtl() / 1000)
+                .build();
+    }
+
+    private String generateNickName() {
+        return "管理员" + RandomStringUtils.randomNumeric(6);
+    }
+ public boolean createAdmins(AdminCreateDTO adminCreateDTO){
+     if (userRepository.existsByUsername(adminCreateDTO.getUsername())) {
+         throw new BusinessException("账号已被使用！");
+     }
+     User user = new User();
+     user.setPassword(passwordEncoder.encode(adminCreateDTO.getPassword()));
+     user.setNickName(generateNickName());
+     user.setUsername(adminCreateDTO.getUsername());
+     user.setAvatarUrl(null);
+     user.setRole(Role.ADMIN);
+     User save = userRepository.save(user);
+     return true;
+ }
 }

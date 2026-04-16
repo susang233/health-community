@@ -17,8 +17,9 @@ spring:
     password: ""
     driver-class-name: org.h2.Driver
     hikari:
-      maximum-pool-size: 5
+      maximum-pool-size: 10   # 默认是 10
       connection-timeout: 30000
+      leak-detection-threshold: 60000
 
   # 关键！！！Flyway 必须放在这里，让它使用 dev 数据源
   flyway:
@@ -56,6 +57,7 @@ logging:
     org.hibernate.SQL: debug
     org.hibernate.type: trace
     org.springframework.transaction: debug
+    com.zaxxer.hikari: DEBUG
 
 springdoc:
   swagger-ui:

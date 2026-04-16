@@ -1,6 +1,7 @@
 package com.health.community.repository;
 
 
+import com.health.community.common.enumeration.Role;
 import com.health.community.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,5 +41,5 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     void decrementFollowersCount(@Param("userId") Integer userId);
 
 
-
+    boolean existsByRole(Role role);
 }

@@ -18,19 +18,9 @@ import java.util.List;
 @AllArgsConstructor // 全参构造
 public class UserPostVO implements Serializable {
 
-    private Integer userId;
 
-    private String avatarUrl;
-    private String nickName;
-    private Integer followersCount ;
-
-   private Integer followingCount ;
     private int page;           // 当前页（从1开始）
-    private int totalPages;     // 总页数
+    private boolean hasNext;
     private List<PostSummaryVO> Posts;
-
-
-
-
 
 }

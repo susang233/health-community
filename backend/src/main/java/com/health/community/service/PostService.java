@@ -15,6 +15,7 @@ import com.health.community.entity.*;
 import com.health.community.repository.PostImageRepository;
 import com.health.community.repository.PostRepository;
 
+import com.health.community.vo.PostIndexVO;
 import com.health.community.vo.PostSummaryVO;
 import com.health.community.vo.PostVO;
 import com.health.community.vo.UserPostVO;
@@ -22,14 +23,16 @@ import jakarta.transaction.Transactional;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 
-import java.time.LocalDateTime;
+
 import java.util.*;
 
 import java.util.function.Function;
@@ -99,7 +102,7 @@ public class PostService {
     }
 
 
-    public List<PostVO> getPostList(PostListType type, int page) {
+    public PostIndexVO getPostList(PostListType type, int page) {
         if (type == null) {
             throw new IllegalArgumentException("帖子列表类型不能为空");
         }
@@ -117,8 +120,7 @@ public class PostService {
         }
         Integer finalUserId = (targetUserId != null) ? targetUserId : currentUserId;
 
-        //  获取用户基本信息（含粉丝数、关注数、帖子数、头像、昵称等）
-        User user = userService.findByUserId(finalUserId);
+
 
 
         //  查询该用户的帖子（分页）
@@ -137,13 +139,10 @@ public class PostService {
                 .map(this::convertToPostSummaryVO)
                 .toList();
 
-        return UserPostVO.builder().userId(user.getUserId())
-                .avatarUrl(user.getAvatarUrl()).nickName(user.getNickName())
-                .followersCount(user.getFollowersCount())
-                .followingCount(user.getFollowingCount())
+        return UserPostVO.builder()
                 .Posts(postSummaryVOs)
                 .page(page)
-                .totalPages(postPage.getTotalPages())
+                .hasNext(postPage.hasNext())
                 .build();
 
     }
@@ -169,15 +168,20 @@ public class PostService {
     }
 
 
-    private List<PostVO> getRecommendPostList(int page) {
+    private PostIndexVO getRecommendPostList(int page) {
         Pageable pageable = PageRequest.of(Math.max(0, page - 1), PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createTime"));
         Page<Post> postPage = postRepository.findByStatus(PostStatus.APPROVED, pageable);
 
         if (postPage.isEmpty()) {
-            return Collections.emptyList();
+            return PostIndexVO.builder().page(page)
+                    .hasNext(false).Posts(Collections.emptyList()).build();
         }
 
 
+        return getPostIndexVO(page, postPage);
+    }
+
+    private PostIndexVO getPostIndexVO(int page, Page<Post> postPage) {
         // 提取所有 userId 和 postId
         List<Long> postIds = postPage.getContent().stream().map(Post::getId).toList();
         List<Integer> userIds = postPage.getContent().stream().map(Post::getUserId).distinct().toList();
@@ -196,9 +200,13 @@ public class PostService {
                 .stream().collect(Collectors.toMap(TagSetting::getUserId, Function.identity()));
 
         //  转换 VO
-        return postPage.getContent().stream()
+        List<PostVO> list = postPage.getContent().stream()
                 .map(post -> convertToPostVO(post, imageMap, userMap, healthMap, tagSettingMap))
                 .toList();
+
+        return PostIndexVO.builder().page(page)
+                .hasNext(postPage.hasNext())
+                .Posts(list).build();
     }
 
 
@@ -213,13 +221,7 @@ public class PostService {
         User user = userMap.get(userId);
         HealthProfile healthProfile = healthMap.get(userId);
         TagSetting tagSetting = tagSettingMap.get(userId); // 可能为 null
-
-        // 处理 tags：如果用户没设置 tagSetting，默认显示
-        List<String> tags = new ArrayList<>();
-        if (tagSetting != null && tagSetting.getDisplay() == TagDisplay.SHOW) {
-            tags = tagSetting.getTags(); // 假设 getTags() 返回 List<String>
-        }
-        // 如果 tagSetting == null，tags 保持为空列表（或你也可以默认显示？需产品定义）
+        String profileText = getProfileText(tagSetting, healthProfile);
 
         return PostVO.builder()
                 .id(post.getId())
@@ -227,12 +229,9 @@ public class PostService {
                 .gender(healthProfile != null ? healthProfile.getGender() : null)
                 .avatarUrl(user != null ? user.getAvatarUrl() : "")
                 .nickName(user != null ? user.getNickName() : "未知用户")
-                .height(healthProfile != null ? healthProfile.getHeight() : null)
-                .currentWeight(healthProfile != null ? healthProfile.getCurrentWeight() : null)
-                .bmi(healthProfile != null ? healthProfile.getBmi() : null)
-                .tags(tags)
                 .content(post.getContent())
                 .status(post.getStatus())
+                .profileText(profileText)
                 .likeCount(post.getLikeCount())
                 .commentCount(post.getCommentCount())
                 .postImageList(imageMap.getOrDefault(post.getId(), Collections.emptyList()))
@@ -240,7 +239,43 @@ public class PostService {
                 .updateTime(post.getUpdateTime())
                 .build();
     }
-    private List<PostVO> getFollowingPostList(int page) {
+
+    private static @Nullable String getProfileText(TagSetting tagSetting, HealthProfile healthProfile) {
+        String profileText = null;
+
+
+        if (tagSetting != null && tagSetting.getDisplay() == TagDisplay.SHOW) {
+            List<String> parts = new ArrayList<>();
+
+            //  身高
+            if (healthProfile != null && healthProfile.getHeight() != null) {
+                parts.add(healthProfile.getHeight() + "cm");
+            }
+
+            //  体重
+            if (healthProfile != null && healthProfile.getCurrentWeight() != null) {
+                parts.add(String.format("%.1fkg", healthProfile.getCurrentWeight()));
+            }
+
+            // BMI
+            if (healthProfile != null && healthProfile.getBmi() != null) {
+                parts.add(String.format("BMI %.1f", healthProfile.getBmi()));
+            }
+
+            //  标签（从 tagSetting 获取，若无则跳过）
+            if (!CollectionUtils.isEmpty(tagSetting.getTags())) {
+                parts.add(String.join(",", tagSetting.getTags()));
+            }
+
+            // 拼接所有部分
+            if (!parts.isEmpty()) {
+                profileText = String.join("｜", parts);
+            }
+        }
+        return profileText;
+    }
+
+    private PostIndexVO getFollowingPostList(int page) {
         Integer currentUserId = UserContext.getCurrentUserId();
         if (currentUserId == null) {
             throw new BusinessException("请先登录");
@@ -250,7 +285,8 @@ public class PostService {
         List<Integer> followeeIds =  followService.getFolloweeIds(currentUserId);
 
         if (followeeIds.isEmpty()) {
-            return Collections.emptyList(); // 没关注任何人
+            return PostIndexVO.builder().page(page)
+                    .hasNext(false).Posts(Collections.emptyList()).build();// 没关注任何人
         }
 
         // 2. 查询这些人的 PUBLISHED 帖子
@@ -263,25 +299,7 @@ public class PostService {
 
 
         // 提取所有 userId 和 postId
-        List<Long> postIds = postPage.getContent().stream().map(Post::getId).toList();
-        List<Integer> userIds = postPage.getContent().stream().map(Post::getUserId).distinct().toList();
-        List<PostImage> postImages = findImagesByPostIds(postIds);
-
-        Map<Long, List<PostImage>> imageMap = postImages.stream()
-                .collect(Collectors.groupingBy(PostImage::getPostId));
-
-        Map<Integer, User> userMap = userService.findByUserIds(userIds)
-                .stream().collect(Collectors.toMap(User::getUserId, Function.identity()));
-
-        Map<Integer, HealthProfile> healthMap = healthService.findByUserIds(userIds)
-                .stream().collect(Collectors.toMap(HealthProfile::getUserId, Function.identity()));
-
-        Map<Integer, TagSetting> tagSettingMap = tagSettingService.findByUserIds(userIds)
-                .stream().collect(Collectors.toMap(TagSetting::getUserId, Function.identity()));
-
-        return postPage.getContent().stream()
-                .map(post -> convertToPostVO(post, imageMap, userMap, healthMap, tagSettingMap))
-                .toList();
+        return getPostIndexVO(page, postPage);
     }
 
     public boolean updatePost( PostDTO postDTO) {
@@ -361,5 +379,52 @@ public class PostService {
         //  再删帖子
         postRepository.deleteById(postId);
         return true;
+    }
+
+    public void decrementLikeCount(Long postId) {
+        postRepository.updateLikeCount(postId, -1);
+    }
+
+    public void incrementLikeCount(Long postId) {
+        postRepository.updateLikeCount(postId, 1);
+    }
+
+    public void incrementCommentCount(Long postId) {
+        postRepository.updateCommentCount(postId, 1);
+    }
+
+    public Integer findLikeCountByPostId(Long postId) {
+        return postRepository.findLikeCountById(postId);
+    }
+
+    public boolean existsById(Long postId) {
+        return postRepository.existsById(postId);
+    }
+
+    public PostVO getPostVO(Long postId){
+        Post post = postRepository.findById(postId) .orElseThrow(() -> new BusinessException("帖子不存在"));
+        Integer userId = post.getUserId();
+        HealthProfile healthProfile = healthService.findHealthProfileByUserId(userId);
+        TagSetting tagSetting = tagSettingService.findTagByUserId(userId);
+        String profileText = getProfileText(tagSetting, healthProfile);
+
+        User user = userService.findByUserId(userId);
+        List<PostImage> postImageList = postImageRepository.findByPostIdOrderBySortIndexAsc(postId);
+        return PostVO.builder().id(post.getId())
+                .userId(userId)
+                .gender(healthProfile.getGender())
+                .avatarUrl(user.getAvatarUrl())
+                .nickName(user.getNickName())
+                .profileText(profileText)
+                .content(post.getContent())
+                .status(post.getStatus())
+                .likeCount(post.getLikeCount())
+                .commentCount(post.getCommentCount())
+                .postImageList(postImageList)
+                .createTime(post.getCreateTime())
+                .updateTime(post.getUpdateTime()).build();
+
+
+
     }
 }

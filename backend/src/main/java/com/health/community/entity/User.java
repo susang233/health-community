@@ -3,6 +3,7 @@ package com.health.community.entity;
 import com.health.community.common.enumeration.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor  // 无参构造
 @AllArgsConstructor // 全参构造
 @EntityListeners(AuditingEntityListener.class)
+@Builder
 public class User implements Serializable {
 
     @Id

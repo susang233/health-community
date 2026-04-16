@@ -11,8 +11,10 @@ import DashboardPage from '@/pages/DashboardPage'; // 仪表盘内容组件
 import DashboardLayout from '@/layouts/DashboardLayout';
 import WeightPage from '@/pages/Health/WeightPage';
 import DietPage from '@/pages/Health/DietPage';
-
+import RecommendPage from '@/pages/Community/RecommendPage';
 import AssessmentPage from '@/pages/AssessmentPage';
+import FollowingPage from '@/pages/Community/FollowingPage';
+import MyPage from '@/pages/Community/MyPage';
 import AssessmentResult from '@/pages/AssessmentPage/step/AssessmentResult';
 import { getToken ,isTokenValid} from '@/utils/auth';
 
@@ -43,7 +45,7 @@ export const router = createBrowserRouter([
                 path: 'health',
                 element: <HealthLayout />,
                 children: [
-                  { index: true, element: <Navigate to="weight" replace /> }, // 可选的健康模块首页
+                  { index: true, element: <Navigate to="diet" replace /> }, // 可选的健康模块首页
                   { path: 'weight', element: <WeightPage /> },
                   { path: 'diet', element: <DietPage /> },
                   
@@ -54,7 +56,10 @@ export const router = createBrowserRouter([
                 path: 'community',
                 element: <CommunityLayout />,
                 children: [
-                  
+                   { index: true, element: <Navigate to="recommend" replace /> }, 
+                  { path: 'recommend', element: <RecommendPage /> },
+                  { path: 'following', element: <FollowingPage /> },
+                  { path: 'my', element: <MyPage /> },
                   // ... 其他
                 ]
               }

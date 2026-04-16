@@ -130,10 +130,10 @@ public class LoginInterceptor implements HandlerInterceptor {
                     Arrays.toString(requiredRoles), userRole);
 
 
-            // ✅ 直接返回JSON，不用抛异常
+            // 直接返回JSON，不用抛异常
             Result<?> errorResult = Result.error(403, "权限不足");
             writeJsonResponse(response, objectMapper.writeValueAsString(errorResult));
-            // 🔥 关键：手动清理 ThreadLocal！
+            //  关键：手动清理 ThreadLocal！
             UserContext.clear();
             return false;
         }

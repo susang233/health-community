@@ -7,16 +7,17 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 // 社群侧边栏
 const communitySiderItems: MenuProps['items'] = [
   {
-    key: 'posts',
-    label: '帖子列表',
+    key: 'recommend',
+    label: '推荐动态',
+  },
+  
+  {
+    key: 'following',
+    label: '关注动态',
   },
   {
-    key: 'my-posts',
+    key: 'my',
     label: '我的帖子',
-  },
-  {
-    key: 'friends',
-    label: '好友',
   },
 ];
 

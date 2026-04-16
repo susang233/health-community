@@ -12,16 +12,11 @@ import java.util.List;
 @Builder
 @NoArgsConstructor  // 无参构造
 @AllArgsConstructor // 全参构造
-public class UserVO implements Serializable {
-
-    private Integer userId;
-
-    private String avatarUrl;
-    private String nickName;
-    private Integer followersCount ;
-
-    private Integer followingCount ;
+public class PostIndexVO implements Serializable {
 
 
+    private int page;           // 当前页（从1开始）
+    private boolean hasNext;
+    private List<PostVO> Posts;
 
 }
