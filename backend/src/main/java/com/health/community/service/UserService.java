@@ -31,6 +31,7 @@ public class UserService {
     private final AppProperties appProperties;
     private final FileStorageService fileStorageService;
     private final TagSettingService tagSettingService;
+    private final FollowService followService;
     //private static final String DEFAULT_AVATAR_URL = "/avatars/default-avatar.png";
 
     public User findByUsername(String username) {
@@ -73,42 +74,53 @@ public class UserService {
     }
 
 
-    public Boolean uploadAvatar(MultipartFile file) {
+    public String uploadAvatar(MultipartFile file) {
         try {
+            if (file.isEmpty()) {
+                throw new BusinessException("文件为空");
+            }
+            if (file.getSize() > 3 * 1024 * 1024) {
+                throw new BusinessException("文件不能超过 3MB");
+            }
+            // 校验文件类型
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new BusinessException("只能上传图片文件");
+            }
+
+
             Integer currentUserId = UserContext.getCurrentUserId();
             if (currentUserId == null) {
                 throw new BusinessException("未登录！");
             }
-            if (file.isEmpty()) {
-                throw new BusinessException("文件为空");
-            }
 
-            // 👇 直接调用通用上传方法，指定前缀为 "avatars"
+
+            //  直接调用通用上传方法，指定前缀为 "avatars"
             String avatarUrl = fileStorageService.uploadFile(file, "avatars");
 
             // 更新数据库
             User user = userRepository.findById(currentUserId)
                     .orElseThrow(() -> new RuntimeException("用户不存在"));
             user.setAvatarUrl(avatarUrl);
-            userRepository.save(user);
+            User save = userRepository.save(user);
 
-            return true;
+            return save.getAvatarUrl();
         } catch (Exception e) {
             log.error("头像上传失败", e);
             throw new BusinessException("上传失败");
         }
     }
 
-    public Boolean updateNickName(String nickName) {
+    public String updateNickName(String nickName) {
         try {
             Integer currentUserId = UserContext.getCurrentUserId();
             User user = userRepository.findById(currentUserId)
                     .orElseThrow(() -> new RuntimeException("用户不存在"));
 
             user.setNickName(nickName);
-            userRepository.save(user);
+            User save = userRepository.save(user);
 
-            return true;
+            return save.getNickName();
 
         } catch (Exception e) {
             log.error("昵称修改失败", e);
@@ -125,16 +137,22 @@ public class UserService {
     }
 
     public UserVO findUserVOByUserId(Integer targetUserId) {
+
             Integer currentUserId = UserContext.getCurrentUserId(); // 当前登录用户
             if (targetUserId == null && currentUserId == null) {
                 throw new BusinessException("请先登录");
             }
+        if(targetUserId==null){
+            targetUserId=currentUserId;
+        }
+        boolean isFollow = followService.checkIsFollow(currentUserId, targetUserId);
 
-            User user = findByUserId(targetUserId);
+        User user = findByUserId(targetUserId);
         return UserVO.builder().userId(user.getUserId())
                 .avatarUrl(user.getAvatarUrl())
                 .nickName(user.getNickName())
                 .followersCount(user.getFollowersCount())
-                .followingCount(user.getFollowingCount()).build();
+                .followingCount(user.getFollowingCount())
+                .isFollow(isFollow).build();
     }
 }

@@ -63,6 +63,7 @@ public class AuthService {
                 user.getUsername(), user.getRole(), loginDTO.isRememberMe());
         return LoginVO.builder()
                 .token(token)
+                .userId(user.getUserId())
                 .username(user.getUsername())
                 .nickname(user.getNickName())
                 .role(user.getRole().name())
@@ -111,6 +112,7 @@ public class AuthService {
 
         return LoginVO.builder()
                 .token(token)
+                .userId(user.getUserId())
                 .username(user.getUsername())
                 .nickname(user.getNickName())
                 .role(user.getRole().name())

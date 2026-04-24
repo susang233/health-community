@@ -5,6 +5,7 @@ import com.health.community.dto.TagSettingDTO;
 import com.health.community.service.HealthService;
 import com.health.community.service.TagSettingService;
 import com.health.community.vo.HealthProfileVO;
+import com.health.community.vo.TagSettingVO;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,10 +24,14 @@ public class TagSettingController {
     @Operation(
             summary = "保存修改tag"
     )
-    @PostMapping("/tag-setting")
+    @PostMapping
     public Result<Boolean> saveTagSetting(@Valid @RequestBody TagSettingDTO tagSettingDTO) {
 
         return Result.success(tagSettingService.saveTagSetting( tagSettingDTO));
+    }
+    @GetMapping
+    public Result<TagSettingVO> getCurrentUserTagSetting() {
+        return Result.success(tagSettingService.getCurrentUserTagSetting());
     }
 
 }

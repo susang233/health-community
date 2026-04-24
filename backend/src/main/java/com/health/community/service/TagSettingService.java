@@ -9,6 +9,7 @@ import com.health.community.entity.TagSetting;
 
 import com.health.community.repository.TagSettingRepository;
 
+import com.health.community.vo.TagSettingVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,8 +55,8 @@ public class TagSettingService {
             tagSettingRepository.save(setting);
             return true;
         } catch (Exception e) {
-            log.error("昵称修改失败", e);
-            throw new BusinessException("修改昵称失败");
+            log.error("标签修改失败", e);
+            throw new BusinessException("修改标签失败");
         }
 
     }
@@ -114,6 +115,21 @@ public class TagSettingService {
 
     public boolean existsByUserId(Integer userId) {
         return tagSettingRepository.existsByUserId(userId);
+    }
+
+
+    public TagSettingVO getCurrentUserTagSetting() {
+        Integer userId = UserContext.getCurrentUserId();
+        TagSetting setting = tagSettingRepository.findByUserId(userId)
+                .orElseGet(() -> TagSetting.builder()
+                        .display(TagDisplay.SHOW)
+                        .tags(new ArrayList<>())
+                        .build());
+
+        TagSettingVO response = new TagSettingVO();
+        response.setDisplay(setting.getDisplay());
+        response.setTags(setting.getTags() != null ? setting.getTags() : new ArrayList<>());
+        return response;
     }
 }
 

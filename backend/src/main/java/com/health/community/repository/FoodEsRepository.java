@@ -12,6 +12,6 @@ import org.springframework.stereotype.Repository;
 public interface FoodEsRepository extends ElasticsearchRepository<FoodDoc, Long> {
     @Query("{ \"match\": { \"name\": { \"query\": \"?0\", \"fuzziness\": \"AUTO\" } } }")
     Page<FoodDoc> searchFuzzyByName(String name, Pageable pageable);
-
-
+    @Query("{\"match\": {\"name\": {\"query\": \"?0\", \"operator\": \"and\"}}}")
+    Page<FoodDoc> searchStrictByName(String name, Pageable pageable);
 }

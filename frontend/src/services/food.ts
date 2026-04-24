@@ -1,5 +1,5 @@
 // src/services/auth.ts
-import api from '@/services/axios';
+import {api} from '@/services/axios';
 import type { DailyDietVO, FoodDetailVO, FoodRecordDTO, FoodSearchVO } from '@/types/food';
 
 

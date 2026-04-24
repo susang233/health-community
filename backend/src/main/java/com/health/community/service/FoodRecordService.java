@@ -51,10 +51,6 @@ public class FoodRecordService {
         //前端不传id，id为null时为添加，foodCode可赋值
         Food food = foodService.findFoodByFoodCode(foodRecordDTO.getFoodCode());
         //计算calory等
-            /*calories;             // = food.caloriesPer100g * weight / 100
-    private Double protein;              // = food.proteinPer100g * weight / 100
-    private Double fat;         // = food.fatPer100g * weight / 100
-    private Double carbs;       // = food.carbsPer100g * weight / 100*/
         Double weight = foodRecordDTO.getWeight();
         LocalDateTime recordTime = foodRecordDTO.getRecordTime(); // 必不为 null
         LocalDate date = recordTime.toLocalDate(); // 安全提取日期
@@ -232,7 +228,7 @@ public class FoodRecordService {
                     .mapToDouble(FoodRecordVO::getProtein)
                     .sum();
 
-            // 获取该餐建议热量范围（你可能有配置表或算法）
+            // 获取该餐建议热量范围
             NutritionSuggestion suggestion = calculateMealSuggestion(mealType, recommendedCalories);
 
             // 构建 VO
@@ -268,21 +264,8 @@ public class FoodRecordService {
     }
     private DailyDietVO buildDailyDietVO(LocalDate recordDate, List<MealRecordVO> mealVOs, Integer recommendedCalories) {
 
-        /**
-         * private Double recommendedCalories;//推荐的热量
-         *
-         *
-         *     private Double remainingCalories; // 还可以吃
-         *
-         *     // 营养目标（后端计算）
-         *     private NutritionGoal nutritionGoal; // { protein: xx g, fat: xx g, carbs: xx g }
-         *
-         *     // 实际摄入（后端聚合）
-         *     private ActualIntake actualIntake; // { protein: xx g, ... }g
-         *
-         *     // 按餐别分组
-         *     private List<MealRecordVO> meals; // 仅包含有数据的餐别
-         */
+
+
 
         Double actualCalories = mealVOs.stream()
                 .mapToDouble(MealRecordVO::getActualCalories) // 转为 double 流

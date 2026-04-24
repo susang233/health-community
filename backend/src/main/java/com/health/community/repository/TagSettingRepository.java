@@ -13,7 +13,7 @@ import java.util.Optional;
 @Repository
 public interface TagSettingRepository extends JpaRepository<TagSetting, Long> {
 
-
+    @EntityGraph(attributePaths = "tags")
     Optional<TagSetting> findByUserId(Integer userId);
     @EntityGraph(attributePaths = "tags")
     List<TagSetting> findByUserIdIn(List<Integer> userIds);

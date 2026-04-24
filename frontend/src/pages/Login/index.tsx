@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { login } from "@/services/auth"; // 👈 普通导入（函数）
 import type { LoginData } from "@/services/auth"; // 👈 类型导入（加 type）
-import { setToken ,getToken,setUsername} from "@/utils/auth";
+import { setToken ,getToken,setUser} from "@/utils/auth";
 import { Card, Form, Input, Button, Typography, message, Checkbox } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
@@ -14,14 +14,14 @@ const { Title } = Typography;
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation(); // 👈 获取路由状态
-  const [form] = Form.useForm(); // 👈 表单实例
+  const location = useLocation(); // 获取路由状态
+  const [form] = Form.useForm(); //  表单实例
 
   // 页面加载时，如果有传递的 username，自动填充
   useEffect(() => {
-    const username = location.state?.username;
-    if (username) {
-      form.setFieldsValue({ username });
+    const user = location.state?.user;
+    if (user) {
+     form.setFieldsValue({ username: user.username });
     }
   }, [location.state, form]);
   //有token的用户访问登录页，直接跳转到仪表盘
@@ -40,7 +40,7 @@ export default function LoginPage() {
     try {
       const res = await login(values);
       setToken(res.token,values.rememberMe); // 注意：如果用了拦截器改造，res 就是 data，不是 res.data
-      setUsername(res.username, values.rememberMe);
+      setUser(res.userId,res.username, res.nickname,res.avatar,res.expireIn,res.role,values.rememberMe);
       message.success("登录成功！");
       navigate("/dashboard");
     } catch (error) {

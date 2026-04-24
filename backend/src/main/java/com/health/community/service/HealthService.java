@@ -115,29 +115,19 @@ public class HealthService {
             recommendedCalories = tdee + 300;
         }
 
-
         if (Gender.FEMALE.equals(gender)) {
             recommendedCalories = Math.max(1200, recommendedCalories);
         } else {
             recommendedCalories = Math.max(1500, recommendedCalories);
         }
-
-
-
-
-
-
-
         //通过userId查询该用户是否有健康档案
-
-        Optional<HealthProfile> existingOpt = healthProfileRepository.findByUserId(user.getUserId());
+        Optional<HealthProfile> existingOpt = healthProfileRepository.
+                findByUserId(user.getUserId());
         //有健康档案，则更新数据
         if(existingOpt.isPresent()){
             // 通过 userId 查询健康档案
             HealthProfile existing = existingOpt.get();
-
                 // 更新现有记录
-
             existing.setGender(gender);
             existing.setHeight(height);
             existing.setBirthday(healthProfileDTO.getBirthday());
@@ -176,7 +166,7 @@ public class HealthService {
         }
 
         // 调用 service 保存当天体重
-        weightRecordService.saveWeightRecord( currentWeight,LocalDate.now()); // ← 核心一行！
+        weightRecordService.saveWeightRecord( currentWeight,LocalDate.now());
 
         //返回vo
         return HealthProfileVO.builder()

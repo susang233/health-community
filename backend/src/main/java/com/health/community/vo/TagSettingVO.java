@@ -1,5 +1,6 @@
 package com.health.community.vo;
 
+import com.health.community.common.enumeration.TagDisplay;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,11 +13,11 @@ import java.util.List;
 @Builder
 @NoArgsConstructor  // 无参构造
 @AllArgsConstructor // 全参构造
-public class PostIndexVO implements Serializable {
+public class TagSettingVO implements Serializable {
+
+    private TagDisplay display;      // SHOW / HIDE
+    private List<String> tags;       // ["学生党", "健身党"]
 
 
-    private int page;           // 当前页（从1开始）
-    private boolean hasNext;
-    private List<PostVO> posts;
 
 }

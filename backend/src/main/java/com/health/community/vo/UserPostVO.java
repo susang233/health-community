@@ -19,8 +19,10 @@ import java.util.List;
 public class UserPostVO implements Serializable {
 
 
-    private int page;           // 当前页（从1开始）
-    private boolean hasNext;
+    private Integer page;           // 当前页（从1开始）
+    private Boolean hasNext;
+
+
     private List<PostSummaryVO> Posts;
 
 }

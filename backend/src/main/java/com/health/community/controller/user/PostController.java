@@ -7,6 +7,7 @@ import com.health.community.dto.PostCreateDTO;
 import com.health.community.dto.PostDTO;
 import com.health.community.service.CommentService;
 import com.health.community.service.FileStorageService;
+import com.health.community.service.PostLikeService;
 import com.health.community.service.PostService;
 import com.health.community.vo.*;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,7 +30,7 @@ public class PostController {
     private final PostService postService;
     private final FileStorageService fileStorageService;
     private final CommentService commentService;
-
+    private final PostLikeService postLikeService;
 
     @Operation(
             summary = "发帖"
@@ -68,6 +69,7 @@ public class PostController {
             @RequestParam(defaultValue = "1") int page
 
     ) {
+        //TODO 加缓存
         return Result.success(postService.getPostList(type, page));
     }
     @Operation(
@@ -128,4 +130,13 @@ public class PostController {
         return Result.success(commentService.getCommentVOList(postId, page));
     }
 
+    /**
+     * 点赞 / 取消点赞 帖子
+     * POST /api/posts/{postId}/like
+     */
+    @PostMapping("/{postId}/like")
+    public Result<PostLikeVO> toggleLike(@PathVariable Long postId) {
+        PostLikeVO result = postLikeService.toggleLike(postId);
+        return Result.success(result);
+    }
 }

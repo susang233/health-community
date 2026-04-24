@@ -10,7 +10,7 @@ import BirthdayStep from "./step/BirthdayStep";
 import ActivityStep from "./step/ActivityStep";
 import TargetWeightStep from "./step/TargetWeightStep";
 import type { AssessmentData } from "@/types/assessment";
-import { getUsername } from "@/utils/auth";
+
 import { saveHealthProfile } from "@/services/health";
 // 测评步骤标题
 const TOTAL_STEPS = 6;
@@ -18,7 +18,7 @@ const TOTAL_STEPS = 6;
 export default function AssessmentPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<AssessmentData>({
-    username: undefined,
+  
     gender: undefined,
     height: undefined,
     currentWeight: undefined,
@@ -29,12 +29,7 @@ export default function AssessmentPage() {
   const navigate = useNavigate();
   const { token } = theme.useToken();
 
-  useEffect(() => {
-    const username = getUsername();
-    if (username) {
-      setFormData((prev) => ({ ...prev, username }));
-    }
-  }, []);
+ 
   // 更新表单数据（供子组件调用）
   const updateFormData = (data: Partial<AssessmentData>) => {
     setFormData((prev) => ({ ...prev, ...data }));

@@ -48,64 +48,83 @@ public class FoodService {
 
     private final static int SIZE=20;
 
-    //搜索
-    public FoodSearchVO searchFood(String q,Integer page){
 
-        String cacheKey = CacheKeyUtils.getFoodSearchKey(q, page,SIZE);
+    // 搜索
+    public FoodSearchVO searchFood(String q, Integer page) {
+        String cacheKey = CacheKeyUtils.getFoodSearchKey(q, page, SIZE);
 
-        //redis查询
+        // 1. 先读缓存
         String cachedJson = redisTemplate.opsForValue().get(cacheKey);
         if (cachedJson != null) {
             try {
                 return objectMapper.readValue(cachedJson, FoodSearchVO.class);
             } catch (Exception e) {
                 log.warn("Redis 缓存解析失败，key={}", cacheKey, e);
-                // 解析失败就当没缓存，继续往下查
             }
         }
-        // 查 ES
-        Pageable pageable = PageRequest.of(page - 1, SIZE);
-        Page<FoodDoc> esPage = foodEsRepository.searchFuzzyByName(q, pageable);
 
+        // 2. 先查 ES
+        Pageable pageable = PageRequest.of(page - 1, SIZE);
+        Page<FoodDoc> esPage = foodEsRepository.searchStrictByName(q, pageable);
         FoodSearchVO result;
 
-        if (esPage.hasContent()) {
-            // ES 有数据 → 构建 VO
-            result = convertToVO(esPage, page);
-        } else {
-            // 4. ES 没数据 → 调薄荷 API,booHeeClient.searchFoods返回的已经去掉了page和totalPages只剩下food的list
-            List<BooHeeSearchResponse.BooHeeFoodItem> response = booHeeClient.searchFoods(q, page, "");
+        boolean isFirstPage = (page == 1);
+
+        // 只有 第一页 并且 结果满20条，才不走三方
+        boolean esEnoughData = esPage.hasContent() && esPage.getNumberOfElements() >= SIZE;
 
 
-        // 5. 保存到 MySQL + ES（去重！）
-            saveBooHeeFoodsToDbAndEs(response);
+        // 规则：
+        // 是第一页 + ES 数据不足（不满20条）→ 调用三方
 
+        if (isFirstPage && !esEnoughData) {
+            log.info("【首页数据不足】调用三方API: q={}", q);
+
+            // 拉 3 页
+            List<BooHeeSearchResponse.BooHeeFoodItem> allItems = new ArrayList<>();
+            for (int i = 1; i <= 3; i++) {
+                List<BooHeeSearchResponse.BooHeeFoodItem> items =
+                        booHeeClient.searchFoods(q, i, "");
+                if (items == null || items.isEmpty()) break;
+                allItems.addAll(items);
+            }
+
+            // 保存 DB + ES
+            saveBooHeeFoodsToDbAndEs(allItems);
+
+            // 直接返回第一页，不查 ES（解决延迟）
+            List<BooHeeSearchResponse.BooHeeFoodItem> pageItems = allItems.stream()
+                    .limit(SIZE)
+                    .collect(Collectors.toList());
 
             result = new FoodSearchVO();
-            result.setPage(page);
-            result.setFoods(response.stream().map(item -> {
+            result.setPage(1);
+            result.setFoods(pageItems.stream().map(item -> {
                 FoodVO vo = new FoodVO();
                 vo.setCode(item.getCode());
-
                 vo.setName(item.getName());
                 vo.setCaloriesPer100g(item.getCalorieValue());
                 vo.setImageUrl(item.getThumbImageUrl());
                 vo.setIsLiquid(item.getIsLiquid());
                 vo.setHealthLight(item.getHealthLight());
                 return vo;
-            }).collect(Collectors.toList()));}
+            }).collect(Collectors.toList()));
 
-// 7. 缓存到 Redis（1小时过期）
-         try {
+        } else {
+            // 数据足够 或 不是第一页 → 走 ES
+            result = convertToVO(esPage, page);
+        }
 
+        // 缓存
+        try {
             String json = objectMapper.writeValueAsString(result);
             redisTemplate.opsForValue().set(cacheKey, json, 1, TimeUnit.HOURS);
-         } catch (Exception e) {
-            log.error("缓存到 Redis 失败", e);
-    }
+        } catch (Exception e) {
+            log.error("缓存 Redis 失败", e);
+        }
 
         return result;
-}
+    }
     private void updateFoodFromItem(Food food, BooHeeSearchResponse.BooHeeFoodItem item) {
         food.setName(item.getName());
         food.setImageUrl(item.getThumbImageUrl());

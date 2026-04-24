@@ -5,6 +5,7 @@ import com.health.community.common.exception.BusinessException;
 import com.health.community.common.result.Result;
 import com.health.community.dto.LoginDTO;
 import com.health.community.dto.RegisterDTO;
+import com.health.community.dto.UpdateNickNameDTO;
 import com.health.community.service.AuthService;
 import com.health.community.service.UserService;
 import com.health.community.vo.LoginVO;
@@ -62,8 +63,8 @@ public class UserController{
     @Operation(
             summary = "修改头像"
     )
-    @PostMapping("/upload-avatar")
-    public Result<Boolean> uploadAvatar(@RequestParam MultipartFile file) {
+    @PutMapping("/upload-avatar")
+    public Result<String> uploadAvatar(@RequestParam MultipartFile file) {
 
         return Result.success(userService.uploadAvatar(file));
     }
@@ -71,10 +72,10 @@ public class UserController{
     @Operation(
             summary = "修改昵称"
     )
-    @PostMapping("/update-nick-name")
-    public Result<Boolean> updateNickName(@RequestParam @Size(min = 1, max = 20,message = CODE_CAN_NOT_BE_NULL)String nickName) {
+    @PutMapping("/update-nick-name")
+    public Result<String> updateNickName(@Valid @RequestBody UpdateNickNameDTO dto) {
 
-        return Result.success(userService.updateNickName(nickName));
+        return Result.success(userService.updateNickName(dto.getNickName()));
     }
 
     @Operation(

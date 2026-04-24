@@ -13,14 +13,7 @@ const healthSiderItems: MenuProps['items'] = [
     key: 'diet',
     label: '饮食记录',
   },
-  {
-    key: 'water',
-    label: '喝水记录',
-  },
-  {
-    key: 'sleep',
-    label: '睡眠记录',
-  },
+  
 ];
 
 export default function HealthLayout() {

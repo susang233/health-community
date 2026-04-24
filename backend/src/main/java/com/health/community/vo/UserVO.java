@@ -18,6 +18,7 @@ public class UserVO implements Serializable {
 
     private String avatarUrl;
     private String nickName;
+    private Boolean isFollow;
     private Integer followersCount ;
 
     private Integer followingCount ;

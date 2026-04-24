@@ -54,6 +54,7 @@ public class PostService {
     private final TagSettingService tagSettingService;
 
     private final FollowService followService;
+    private final PostLikeService postLikeService;
 
     @Transactional
     public Long createPost(PostCreateDTO postCreateDTO) {
@@ -136,23 +137,31 @@ public class PostService {
         }
 
         List<PostSummaryVO> postSummaryVOs = postPage.getContent().stream()
-                .map(this::convertToPostSummaryVO)
+                .map(post -> convertToPostSummaryVO(post, currentUserId,finalUserId))
                 .toList();
-
         return UserPostVO.builder()
                 .Posts(postSummaryVOs)
                 .page(page)
                 .hasNext(postPage.hasNext())
+
                 .build();
 
     }
 
-    private PostSummaryVO convertToPostSummaryVO(Post post) {
+    private PostSummaryVO convertToPostSummaryVO(Post post,Integer currentUserId,Integer finalUserId) {
         List<PostImage> postImageList = postImageRepository.findByPostIdOrderBySortIndexAsc(post.getId());
+
+        boolean isLike = false;
+        if (currentUserId != null) {
+            // 查询当前用户是否已点赞该帖子
+            isLike = postLikeService.hasUserLikedPost(currentUserId, post.getId());
+        }
         return PostSummaryVO.builder().id(post.getId())
                 .content(post.getContent())
                 .status(post.getStatus())
                 .likeCount(post.getLikeCount())
+                .isOwnPost(finalUserId != null && finalUserId.equals(currentUserId))
+                .isLike(isLike)
                 .commentCount(post.getCommentCount())
                 .createTime(post.getCreateTime())
                 .updateTime(post.getUpdateTime())
@@ -169,12 +178,13 @@ public class PostService {
 
 
     private PostIndexVO getRecommendPostList(int page) {
-        Pageable pageable = PageRequest.of(Math.max(0, page - 1), PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createTime"));
+        Pageable pageable = PageRequest.of(Math.max(0, page - 1), PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createTime")
+                        .and(Sort.by(Sort.Direction.DESC, "id")) );
         Page<Post> postPage = postRepository.findByStatus(PostStatus.APPROVED, pageable);
 
         if (postPage.isEmpty()) {
             return PostIndexVO.builder().page(page)
-                    .hasNext(false).Posts(Collections.emptyList()).build();
+                    .hasNext(false).posts(Collections.emptyList()).build();
         }
 
 
@@ -187,6 +197,16 @@ public class PostService {
         List<Integer> userIds = postPage.getContent().stream().map(Post::getUserId).distinct().toList();
         List<PostImage> postImages = findImagesByPostIds(postIds);
 
+        Set<Long> likedPostIds;
+        Integer currentUserId = UserContext.getCurrentUserId();
+        if (currentUserId != null && !postIds.isEmpty()) {
+            List<PostLike> likes = postLikeService.findByUserIdAndPostIdIn(currentUserId, postIds);
+            likedPostIds = likes.stream()
+                    .map(PostLike::getPostId)
+                    .collect(Collectors.toSet());
+        } else {
+            likedPostIds = Collections.emptySet(); // 或 new HashSet<>()
+        }
         Map<Long, List<PostImage>> imageMap = postImages.stream()
                 .collect(Collectors.groupingBy(PostImage::getPostId));
 
@@ -201,12 +221,12 @@ public class PostService {
 
         //  转换 VO
         List<PostVO> list = postPage.getContent().stream()
-                .map(post -> convertToPostVO(post, imageMap, userMap, healthMap, tagSettingMap))
+                .map(post -> convertToPostVO(post, imageMap, userMap, healthMap, tagSettingMap, likedPostIds))
                 .toList();
 
         return PostIndexVO.builder().page(page)
                 .hasNext(postPage.hasNext())
-                .Posts(list).build();
+                .posts(list).build();
     }
 
 
@@ -215,14 +235,15 @@ public class PostService {
             Map<Long, List<PostImage>> imageMap,
             Map<Integer, User> userMap,
             Map<Integer, HealthProfile> healthMap,
-            Map<Integer, TagSetting> tagSettingMap) {
+            Map<Integer, TagSetting> tagSettingMap,
+            Set<Long> likedPostIds) {
 
         Integer userId = post.getUserId();
         User user = userMap.get(userId);
         HealthProfile healthProfile = healthMap.get(userId);
         TagSetting tagSetting = tagSettingMap.get(userId); // 可能为 null
         String profileText = getProfileText(tagSetting, healthProfile);
-
+        boolean isLiked = likedPostIds.contains(post.getId()); // 不需要判 null
         return PostVO.builder()
                 .id(post.getId())
                 .userId(userId)
@@ -233,6 +254,7 @@ public class PostService {
                 .status(post.getStatus())
                 .profileText(profileText)
                 .likeCount(post.getLikeCount())
+                .isLike(isLiked)
                 .commentCount(post.getCommentCount())
                 .postImageList(imageMap.getOrDefault(post.getId(), Collections.emptyList()))
                 .createTime(post.getCreateTime())
@@ -286,7 +308,7 @@ public class PostService {
 
         if (followeeIds.isEmpty()) {
             return PostIndexVO.builder().page(page)
-                    .hasNext(false).Posts(Collections.emptyList()).build();// 没关注任何人
+                    .hasNext(false).posts(Collections.emptyList()).build();// 没关注任何人
         }
 
         // 2. 查询这些人的 PUBLISHED 帖子
@@ -301,7 +323,7 @@ public class PostService {
         // 提取所有 userId 和 postId
         return getPostIndexVO(page, postPage);
     }
-
+    @Transactional
     public boolean updatePost( PostDTO postDTO) {
         Integer currentUserId = UserContext.getCurrentUserId();
         Long postId = postDTO.getId();
@@ -362,6 +384,7 @@ public class PostService {
         }
         return true;
     }
+    @Transactional
     public boolean deletePost(Long postId) {
         Integer currentUserId = UserContext.getCurrentUserId();
 
@@ -407,9 +430,16 @@ public class PostService {
         HealthProfile healthProfile = healthService.findHealthProfileByUserId(userId);
         TagSetting tagSetting = tagSettingService.findTagByUserId(userId);
         String profileText = getProfileText(tagSetting, healthProfile);
-
+        boolean isFollow = followService.checkIsFollow(UserContext.getCurrentUserId(), userId);
         User user = userService.findByUserId(userId);
         List<PostImage> postImageList = postImageRepository.findByPostIdOrderBySortIndexAsc(postId);
+        Integer currentUserId = UserContext.getCurrentUserId();
+        boolean isLike = false;
+        if (currentUserId != null) {
+            // 查询当前用户是否已点赞该帖子
+            isLike = postLikeService.hasUserLikedPost(currentUserId, postId);
+        }
+
         return PostVO.builder().id(post.getId())
                 .userId(userId)
                 .gender(healthProfile.getGender())
@@ -417,6 +447,9 @@ public class PostService {
                 .nickName(user.getNickName())
                 .profileText(profileText)
                 .content(post.getContent())
+                .isFollow(isFollow)
+                .isOwnPost(userId != null && userId.equals(currentUserId))
+                .isLike(isLike)
                 .status(post.getStatus())
                 .likeCount(post.getLikeCount())
                 .commentCount(post.getCommentCount())

@@ -13,6 +13,7 @@ import java.io.Serializable;
 @Builder
 public class LoginVO {
     private String token;           // JWT token
+    private Integer userId;
     private String username;         // 用户名
     private String nickname;         // 昵称
     private String role;             // 角色（前端跳转用）

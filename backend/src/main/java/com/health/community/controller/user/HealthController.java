@@ -72,6 +72,24 @@ public class HealthController {
         return Result.success(result);
     }
     @Operation(
+            summary = "获取最新体重记录"
+    )
+    @GetMapping("/weight/latest")
+    public Result<WeightHistoryVO> getLatestWeight()
+    {
+
+        return Result.success(weightRecordService.getLatestWeight());
+    }
+    @Operation(
+            summary = "获取最早体重记录"
+    )
+    @GetMapping("/weight/earliest")
+    public Result<WeightHistoryVO> getEarliestWeight()
+    {
+
+        return Result.success(weightRecordService.getEarliesWeight());
+    }
+    @Operation(
             summary = "记录体重"
     )
     @PostMapping("/weight-record")

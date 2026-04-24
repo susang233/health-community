@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { getDailySummary } from "@/services/home";
 import type { DailySummaryResult } from "@/types/food";
 import styles from "./DashboardPage.module.scss";
+import WeightChart from "@/components/WeightChart";
 
 const DietCard = ({ hasProfile }: { hasProfile: boolean }) => {
   const [dailySummary, setDailySummary] = useState<DailySummaryResult | null>(
@@ -131,35 +132,19 @@ export default function DashboardPage() {
 
       {/* 第二行：体重趋势 + 饮水 */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} md={12}>
-          <ClickableCard to="/dashboard/health/weight" title="体重趋势">
-            <div>后续放图表组件</div>
-          </ClickableCard>
-        </Col>
-        <Col xs={24} md={12}>
-          <Card title="喝水" bordered={false}>
-            <p>展示今日饮水量</p>
-            <p>水杯 UI 占位</p>
-          </Card>
-        </Col>
+       <Col xs={24} md={12}>
+  <ClickableCard to="/dashboard/health/weight" title="体重趋势">
+    <div style={{ height: 200 }}>
+      <WeightChart days={7} height={200} />
+    </div>
+  </ClickableCard>
+</Col>
+
+
+
       </Row>
 
-      {/* 快捷入口 */}
-      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-        <Col span={24}>
-          <Card title="快捷入口" bordered={false}>
-            <Button
-              type="link"
-              onClick={() => {
-                /* 跳转记录页 */
-              }}
-            >
-              记录饮食
-            </Button>
-            <Button type="link">记录体重</Button>
-          </Card>
-        </Col>
-      </Row>
+    
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { message, Modal } from 'antd';
 import { checkHealthProfile } from '@/services/health';
-import { getUsername, logout } from '@/utils/auth';
+import { getUser, logout } from '@/utils/auth';
 
 export const useHealthProfile = () => {
   const [hasProfile, setHasProfile] = useState(false);
@@ -12,8 +12,8 @@ export const useHealthProfile = () => {
 
   const fetchProfile = useCallback(async () => {
     try {
-      const username = getUsername();
-      if (!username) {
+      const user = getUser();
+      if (!user) {
         message.error('请先登录');
         logout();//清除残留
         navigate('/login');

@@ -38,7 +38,7 @@ public class TagSetting {
     @CollectionTable(name = "hc_user_tag", joinColumns = @JoinColumn(name = "tag_setting_id"))
     @Column(name = "tag_name")
 
-    private List<String> tags= new ArrayList<>();; // ["学生党", "健身党"]
+    private List<String> tags= new ArrayList<>(); // ["学生党", "健身党"]
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

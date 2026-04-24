@@ -1,7 +1,7 @@
 import { Gender } from "./gender";
 import { ActivityLevel } from "./activityLevel";
 export interface AssessmentData {
-  username?: string;
+ 
   gender?: Gender;
   height?: number;
  
@@ -12,7 +12,7 @@ export interface AssessmentData {
 }
 
 export interface AssessmentResult {
-  username?: string;
+  
   gender?: Gender;
   height?: number;
  

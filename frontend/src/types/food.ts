@@ -104,5 +104,5 @@ export interface FoodVO {
 
 export interface FoodSearchVO {
   page: number;
-  foods: FoodVO[]; 
+  foods: FoodVO[]; // 统一类型
 }

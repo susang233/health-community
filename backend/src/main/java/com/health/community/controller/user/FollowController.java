@@ -28,7 +28,7 @@ public class FollowController {
     public Result<Void> follow(@PathVariable @NotNull(message = "用户ID不能为空")  Integer userId) {
 
 
-        followService.follow( userId);
+        followService.follow(userId);
         return Result.success();
     }
     @Operation(

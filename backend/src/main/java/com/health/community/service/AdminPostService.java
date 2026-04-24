@@ -30,16 +30,16 @@ public class AdminPostService {
     private final PostRepository postRepository;
     private final PostImageRepository postImageRepository;
 
-    // 获取待审核帖子列表（分页）
-    public Page<Post> getPendingPosts(int page) {
-        Pageable pageable = PageRequest.of(Math.max(0, page - 1), PAGE_SIZE, Sort.by("createTime").ascending());
-        return postRepository.findByStatus(PostStatus.PENDING, pageable);
-    }
 
     // 获取所有帖子列表（分页）
-    public Page<Post> getPosts(int page) {
-        Pageable pageable = PageRequest.of(Math.max(0, page - 1), PAGE_SIZE, Sort.by("createTime").ascending());
-        return postRepository.findAll(pageable);
+    public Page<Post> getPosts(PostStatus status, int page) {
+        Pageable pageable = PageRequest.of(Math.max(0, page - 1), PAGE_SIZE, Sort.by("createTime").descending());
+        if (status == null) {
+            return postRepository.findAll(pageable);
+        } else {
+            return postRepository.findByStatus(status, pageable);
+        }
+
     }
 
     //  查看帖子详情

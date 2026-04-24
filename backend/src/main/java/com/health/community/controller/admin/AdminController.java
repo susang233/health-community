@@ -60,7 +60,7 @@ public class AdminController {
             summary = "修改头像"
     )
     @PostMapping("/upload-avatar")
-    public Result<Boolean> uploadAvatar(@RequestParam MultipartFile file) {
+    public Result<String> uploadAvatar(@RequestParam MultipartFile file) {
 
         return Result.success(userService.uploadAvatar(file));
     }
@@ -69,9 +69,10 @@ public class AdminController {
             summary = "修改昵称"
     )
     @PostMapping("/update-nick-name")
-    public Result<Boolean> updateNickName(@RequestParam @Size(min = 1, max = 20,message = CODE_CAN_NOT_BE_NULL)String nickName) {
+    public Result<String> updateNickName(@RequestParam @Size(min = 1, max = 20,message = CODE_CAN_NOT_BE_NULL)String nickName) {
 
         return Result.success(userService.updateNickName(nickName));
     }
+    //TODO 分页获取管理员列表
 }
 

@@ -26,7 +26,8 @@ public class WeightRecordService {
         Integer userId = UserContext.getCurrentUserId();
         // 从数据库查出用户在 [startDate, endDate] 范围内的所有真实记录（按日期升序）
         List<WeightRecord> records = weightRecordRepository
-                .findByUserIdAndRecordDateBetweenOrderByRecordDateAsc(userId, startDate, endDate);
+                .findByUserIdAndRecordDateBetweenOrderByRecordDateAsc
+                        (userId, startDate, endDate);
 
         // 如果一条记录都没有，返回空列表 or 报错（根据业务定）
         if (records.isEmpty()) {
@@ -96,5 +97,36 @@ public class WeightRecordService {
                     .build();
             weightRecordRepository.save(record);
         }
+    }
+
+    public WeightHistoryVO getLatestWeight() {
+        Integer userId = UserContext.getCurrentUserId();
+        Optional<WeightRecord> latestRecord = weightRecordRepository
+                .findFirstByUserIdOrderByRecordDateDesc(userId);
+
+        if (latestRecord.isPresent()) {
+            WeightRecord record = latestRecord.get();
+            WeightHistoryVO vo = new WeightHistoryVO();
+            vo.setDate(record.getRecordDate());
+            vo.setWeight(record.getWeight());
+            return vo;
+        }
+
+        return null;
+    }
+    public WeightHistoryVO getEarliesWeight() {
+        Integer userId = UserContext.getCurrentUserId();
+        Optional<WeightRecord> earliestRecord = weightRecordRepository
+                .findFirstByUserIdOrderByRecordDateAsc(userId);
+
+        if (earliestRecord.isPresent()) {
+            WeightRecord record = earliestRecord.get();
+            WeightHistoryVO vo = new WeightHistoryVO();
+            vo.setDate(record.getRecordDate());
+            vo.setWeight(record.getWeight());
+            return vo;
+        }
+
+        return null;
     }
 }

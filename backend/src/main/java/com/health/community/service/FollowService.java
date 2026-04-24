@@ -140,4 +140,12 @@ public class FollowService {
                 .avatarUrl(user.getAvatarUrl())
                 .nickName(user.getNickName()).build();
     }
+
+    public boolean checkIsFollow(Integer currentUserId, Integer targetUserId) {
+        // 防止自己关注自己
+        if (currentUserId.equals(targetUserId)) {
+            return false;
+        }
+        return followRepository.existsByFollowerIdAndFolloweeId(currentUserId, targetUserId);
+    }
 }
