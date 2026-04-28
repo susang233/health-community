@@ -1,5 +1,6 @@
 package com.health.community.entity;
 
+import com.health.community.common.enumeration.DataSource;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -53,6 +54,16 @@ public class Food {
     @LastModifiedDate
     private LocalDateTime updateTime;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private DataSource dataSource = DataSource.ADMIN;//食物来源：BOOHEE(从薄荷同步)、ADMIN(管理员添加)
+
+
+    @Column(nullable = false)
+    private Boolean isLocked = false;//是否锁定：true=管理员修改过，三方同步不再覆盖
+
+    @Column(nullable = false)
+    private Boolean hidden = false;//是否隐藏：true=用户端不展示、搜索不到
 
     public FoodDoc toFoodDoc() {
         FoodDoc doc = new FoodDoc();
@@ -63,6 +74,7 @@ public class Food {
         doc.setHealthLight(this.healthLight);
         doc.setCaloriesPer100g(this.caloriesPer100g);
         doc.setIsLiquid(this.isLiquid);
+        doc.setHidden(this.hidden); // 加上这一行！
         return doc;
     }
 }

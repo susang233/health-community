@@ -25,6 +25,9 @@ import AdminPostsPage from "@/pages/admin/AdminPostsPage";
 import AdminAuthGuard from "@/components/AdminAuthGuard";
 import AdminCreatePage from "@/pages/admin/AdminCreatePage";
 import PostDetailPage from "@/pages/Community/PostDetailPage";
+import SuperAdminGuard from "@/components/SuperAdminGuard";
+import FollowerListPage from "@/pages/Community/FollowerListPage";
+import FolloweeListPage from "@/pages/Community/FolloweeListPage";
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -42,10 +45,9 @@ export const router = createBrowserRouter([
       { path: "/login", element: <LoginPage /> },
       { path: "/register", element: <RegisterPage /> },
       { path: "/admin/login", element: <AdminLoginPage /> },
-       {
+      {
         element: <AdminAuthGuard />,
         children: [
-         
           {
             path: "/admin/dashboard",
             element: <AdminDashboardLayout />,
@@ -54,17 +56,18 @@ export const router = createBrowserRouter([
               {
                 path: "foods",
                 element: <AdminFoodsPage />,
-               
               },
               {
                 path: "posts",
                 element: <AdminPostsPage />,
-              
               },
-               {
+              {
                 path: "create",
-                element: <AdminCreatePage />,
-              
+                element: (
+                  <SuperAdminGuard>
+                    <AdminCreatePage />
+                  </SuperAdminGuard>
+                ),
               },
             ],
           },
@@ -97,12 +100,13 @@ export const router = createBrowserRouter([
                   { path: "recommend", element: <RecommendPage /> },
                   { path: "following", element: <FollowingPage /> },
                   { path: "user/:userId", element: <UserHomePage /> },
-                   { path: "my-posts", element: <MyPostsPage /> },
-                  
-                  
+                  { path: "my-posts", element: <MyPostsPage /> },
+
+                  { path: "followers", element: <FollowerListPage /> },
+                  { path: "followees", element: <FolloweeListPage /> },
                 ],
               },
-                { path: "post/:id", element: <PostDetailPage /> },
+              { path: "post/:id", element: <PostDetailPage /> },
             ],
           },
           {
@@ -113,10 +117,8 @@ export const router = createBrowserRouter([
               { path: "result", element: <AssessmentResult /> },
             ],
           },
-          
         ],
       },
-     
     ],
   },
 ]);

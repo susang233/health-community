@@ -42,4 +42,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
 
     boolean existsByRole(Role role);
+
+
+    Page<User> findByRole(Role role, Pageable pageable);
+
+    Page<User> findByRoleAndUsernameContaining(Role role, String name, Pageable pageable);
 }

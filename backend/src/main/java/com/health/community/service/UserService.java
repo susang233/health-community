@@ -1,22 +1,28 @@
 package com.health.community.service;
 
 import com.health.community.common.context.UserContext;
+import com.health.community.common.enumeration.Role;
 import com.health.community.common.exception.BusinessException;
 import com.health.community.common.properties.AppProperties;
 import com.health.community.dto.RegisterDTO;
+import com.health.community.entity.Food;
 import com.health.community.entity.User;
 import com.health.community.repository.UserRepository;
+import com.health.community.vo.AdminVO;
 import com.health.community.vo.UserVO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.data.domain.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.health.community.common.constant.MessageConstant.ACCOUNT_ERROR;
 import static com.health.community.common.constant.MessageConstant.ACCOUNT_OR_PASSWORD_ERROR;
@@ -154,5 +160,31 @@ public class UserService {
                 .followersCount(user.getFollowersCount())
                 .followingCount(user.getFollowingCount())
                 .isFollow(isFollow).build();
+    }
+
+
+    public Page<AdminVO> adminPage(String name, Integer page, Integer size) {
+
+
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "userId"));
+
+        // 查询 ADMIN 用户
+        Page<User> userPage;
+        if (StringUtils.hasText(name)) {
+            userPage = userRepository.findByRoleAndUsernameContaining(Role.ADMIN, name, pageable);
+        } else {
+            userPage = userRepository.findByRole(Role.ADMIN, pageable);
+        }
+
+        // 转换为 AdminVO（不包含密码！）
+        List<AdminVO> adminVOList = userPage.getContent().stream()
+                .map(user -> AdminVO.builder()
+                         .userId(user.getUserId())
+                         .username(user.getUsername())
+                         .nickname(user.getNickName())
+                         .build())
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(adminVOList, pageable, userPage.getTotalElements());
     }
 }

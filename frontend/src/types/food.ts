@@ -106,3 +106,83 @@ export interface FoodSearchVO {
   page: number;
   foods: FoodVO[]; // 统一类型
 }
+
+
+export type DataSource = 'BOOHEE' | 'ADMIN';
+
+export interface Food {
+  id: number;
+  code: string;
+  name: string;
+  imageUrl: string;
+  healthLight: number; // 0=无, 1=绿, 2=黄, 3=红
+  caloriesPer100g: number;
+  proteinPer100g: number;
+  fatPer100g: number;
+  carbsPer100g: number;
+  isLiquid: boolean;
+  dataSource: DataSource;
+  isLocked: boolean;
+  hidden: boolean;
+  createTime: string;
+  updateTime: string;
+}
+
+export interface FoodPageQuery {
+  name?: string;
+  dataSource?: DataSource;
+  hidden?: boolean;
+  page: number;
+  size: number;
+}
+
+export interface FoodPageVO {
+  content: {
+   id: number;
+  code: string;
+  name: string;
+  imageUrl: string;
+  healthLight: number; // 0=无, 1=绿, 2=黄, 3=红
+  caloriesPer100g: number;
+  proteinPer100g: number;
+  fatPer100g: number;
+  carbsPer100g: number;
+  isLiquid: boolean;
+  dataSource: DataSource;
+  isLocked: boolean;
+  hidden: boolean;
+  createTime: string;
+  updateTime: string;
+  }[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+    sort: {
+      empty: boolean;
+      unsorted: boolean;
+      sorted: boolean;
+    };
+    offset: number;
+    paged: boolean;
+    unpaged: boolean;
+  };
+  last: boolean;
+  totalElements?: number;
+  totalPages?: number;
+}
+
+export interface FoodAddDTO {
+  name: string;
+  imageUrl: string;
+  healthLight: number;
+  caloriesPer100g: number;
+  proteinPer100g: number;
+  fatPer100g: number;
+  carbsPer100g: number;
+  isLiquid: boolean;
+}
+
+export interface FoodUpdateDTO extends FoodAddDTO {
+  code: string; // 更新才需要
+}
+

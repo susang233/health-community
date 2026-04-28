@@ -22,6 +22,11 @@ public class AppProperties {
     public static class Post {
         private List<String> allowedImageDomains;
     }
+    private Food food =new Food();
+    @Data
+    public static class Food {
+        private List<String> allowedImageDomains;
+    }
     private Minio minio=new Minio();
 
     @Data

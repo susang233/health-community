@@ -19,4 +19,5 @@ public class FoodDoc {
     private Boolean isLiquid;
     private Integer healthLight;
     private String imageUrl;
+    private Boolean hidden;
 }

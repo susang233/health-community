@@ -8,12 +8,15 @@ import com.health.community.dto.LoginDTO;
 
 import com.health.community.entity.User;
 import com.health.community.repository.UserRepository;
+import com.health.community.vo.AdminInitVO;
 import com.health.community.vo.LoginVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.security.SecureRandom;
 
 import static com.health.community.common.constant.MessageConstant.ACCOUNT_OR_PASSWORD_ERROR;
 
@@ -126,17 +129,76 @@ public class AuthService {
     private String generateNickName() {
         return "管理员" + RandomStringUtils.randomNumeric(6);
     }
- public boolean createAdmins(AdminCreateDTO adminCreateDTO){
-     if (userRepository.existsByUsername(adminCreateDTO.getUsername())) {
-         throw new BusinessException("账号已被使用！");
-     }
-     User user = new User();
-     user.setPassword(passwordEncoder.encode(adminCreateDTO.getPassword()));
-     user.setNickName(generateNickName());
-     user.setUsername(adminCreateDTO.getUsername());
-     user.setAvatarUrl(null);
-     user.setRole(Role.ADMIN);
-     User save = userRepository.save(user);
-     return true;
- }
+    public AdminInitVO createAdmin(AdminCreateDTO adminCreateDTO) {
+        // 1. 用户名唯一性校验
+        if (userRepository.existsByUsername(adminCreateDTO.getUsername())) {
+            throw new BusinessException("账号已被使用！");
+        }
+
+        // 2. 确定密码：如果前端没传，就自动生成
+        String rawPassword;
+        if (adminCreateDTO.getPassword() != null && !adminCreateDTO.getPassword().isBlank()) {
+            rawPassword = adminCreateDTO.getPassword();
+        } else {
+            rawPassword = generateRandomPassword(); // 推荐方式
+        }
+
+        // 3. 构建用户
+        User user = new User();
+        user.setUsername(adminCreateDTO.getUsername());
+        user.setPassword(passwordEncoder.encode(rawPassword)); // 加密存储
+        user.setNickName(generateNickName());
+
+        user.setRole(Role.ADMIN);
+
+        // 4. 保存
+        User saved = userRepository.save(user);
+
+        // 5. 返回结果（包含明文密码！）
+        return AdminInitVO.builder()
+                .userId(saved.getUserId())
+                .username(saved.getUsername())
+                .nickname(saved.getNickName())
+                .rawPassword(rawPassword)
+                .build();
+    }
+    private String generateRandomPassword() {
+        String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String lower = "abcdefghijklmnopqrstuvwxyz";
+        String digits = "0123456789";
+        String symbols = "!@#$%^&*";
+        String all = upper + lower + digits + symbols;
+
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(12);
+
+        // 确保至少包含每类字符中的一个
+        sb.append(upper.charAt(random.nextInt(upper.length())));
+        sb.append(lower.charAt(random.nextInt(lower.length())));
+        sb.append(digits.charAt(random.nextInt(digits.length())));
+        sb.append(symbols.charAt(random.nextInt(symbols.length())));
+
+        // 填充剩余长度
+        for (int i = 4; i < 12; i++) {
+            sb.append(all.charAt(random.nextInt(all.length())));
+        }
+
+        // 打乱顺序（可选）
+        char[] chars = sb.toString().toCharArray();
+        for (int i = chars.length - 1; i > 0; i--) {
+            int j = random.nextInt(i + 1);
+            char temp = chars[i];
+            chars[i] = chars[j];
+            chars[j] = temp;
+        }
+
+        return new String(chars); // e.g., "k7#Lm9$vQ2!p"
+    }
+    public String resetPasswordToRandom(Integer userId) {
+        String rawPassword = generateRandomPassword();
+        User user = userRepository.findById(userId) .orElseThrow(() -> new BusinessException("没有该用户"));
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        userRepository.save(user);
+        return rawPassword; // 返回明文
+    }
 }

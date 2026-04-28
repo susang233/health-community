@@ -153,3 +153,24 @@ export const adminLogout = (): void => {
   sessionStorage.removeItem('adminToken');
   sessionStorage.removeItem('admin');
 };
+
+
+export const getAdminRole = (): string | null => {
+  // 先从 localStorage 拿
+  let role = localStorage.getItem("role");
+  if (role) return role;
+
+  // 再从 sessionStorage 拿
+  role = sessionStorage.getItem("role");
+  return role;
+};
+
+// 判断是否超级管理员
+export const isSuperAdmin = (): boolean => {
+  return getAdminRole() === "SUPER_ADMIN";
+};
+
+// 判断是否普通管理员
+export const isAdmin = (): boolean => {
+  return getAdminRole() === "ADMIN";
+};

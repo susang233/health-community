@@ -1,6 +1,8 @@
 package com.health.community.controller.user;
 import com.health.community.common.result.Result;
 import com.health.community.service.FollowService;
+import com.health.community.vo.FolloweePageVO;
+import com.health.community.vo.FollowerPageVO;
 import com.health.community.vo.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.constraints.NotNull;
@@ -46,9 +48,9 @@ public class FollowController {
      * @return 用户VO列表
      */
     @GetMapping("/followees")
-    public Result<List<UserVO>> getFollowees(@RequestParam(defaultValue = "1") int page) {
-        List<UserVO> followees = followService.getFollowee(page);
-        return Result.success(followees);
+    public Result<FolloweePageVO> getFollowees(@RequestParam(defaultValue = "1") int page) {
+
+        return Result.success(followService.getFollowee(page));
     }
 
     /**
@@ -57,9 +59,9 @@ public class FollowController {
      * @return 用户VO列表
      */
     @GetMapping("/followers")
-    public Result<List<UserVO>> getFollowers(@RequestParam(defaultValue = "1") int page) {
-        List<UserVO> followers = followService.getFollower(page);
-        return Result.success(followers);
+    public Result<FollowerPageVO> getFollowers(@RequestParam(defaultValue = "1") int page) {
+
+        return Result.success(followService.getFollower(page));
     }
 
 }

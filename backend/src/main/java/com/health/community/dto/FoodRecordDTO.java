@@ -2,6 +2,8 @@ package com.health.community.dto;
 
 import com.health.community.common.enumeration.MealType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,16 +22,19 @@ public class FoodRecordDTO {
 
     private Long id;
 
-    @Column(nullable = false)
+    @NotNull(message = "记录日期不能为空")
     private LocalDateTime recordTime;        // 记录日期+用餐时间，由前端拼接传回，用餐时间可空
-    @Column(nullable = false)
+
+    @NotBlank(message = "code不能为空")
     private String foodCode;             // 关联 Food.code
-    @Column(nullable = false)
+
+    @NotBlank(message = "名字不能为空")
     private String name;
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private MealType mealType;           // BREAKFAST, LUNCH, DINNER, SNACK
-    @Column(nullable = false)
+
+    @NotNull(message = "餐别不能为空")
+    private MealType mealType;// BREAKFAST, LUNCH, DINNER, SNACK
+
+    @NotNull(message = "体重不能为空")
     private Double weight;// 摄入重量（克）
     //其余数值后端自己调、计算
 

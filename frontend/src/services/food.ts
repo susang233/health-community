@@ -1,6 +1,6 @@
-// src/services/auth.ts
-import {api} from '@/services/axios';
-import type { DailyDietVO, FoodDetailVO, FoodRecordDTO, FoodSearchVO } from '@/types/food';
+// src/services/food.ts
+import {api,adminApi} from '@/services/axios';
+import type { DailyDietVO, FoodDetailVO, FoodPageQuery, FoodPageVO, FoodRecordDTO, FoodSearchVO, FoodUpdateDTO,FoodAddDTO } from '@/types/food';
 
 
 
@@ -36,3 +36,31 @@ export const saveFoodRecord =(data: FoodRecordDTO)  :Promise<boolean> =>
       page,
     },
   })
+
+  
+
+export const getFoods=(params: FoodPageQuery) :Promise<FoodPageVO>=> {
+  return adminApi.get('/admin/food/page', { params });
+}
+
+export const updateFood=( data: FoodUpdateDTO)=> {
+  return adminApi.put('/admin/food/update', data);
+}
+
+export const addFood=( data: FoodAddDTO)=> {
+  return adminApi.post('/admin/food/add', data);//不传code
+}
+
+export const deleteFood = (code: string) => {
+  return adminApi.delete(`/admin/food/delete/${code}`);
+}
+
+
+export const updateHidden = (code: string, hidden: boolean) => {
+  return adminApi.put('/admin/food/updateHidden', { code, hidden }); 
+};
+
+export const uploadFoodImage = (formData: FormData): Promise<string> => {
+  return adminApi.post("/admin/food/upload-image", formData);
+  
+};//添加修改图片的时候需要先调用这个接口获取Url再调用修改/增加上传url

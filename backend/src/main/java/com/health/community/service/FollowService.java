@@ -4,9 +4,12 @@ import com.health.community.common.context.UserContext;
 import com.health.community.common.exception.BusinessException;
 import com.health.community.entity.Follow;
 
+import com.health.community.entity.Post;
 import com.health.community.entity.User;
 import com.health.community.repository.FollowRepository;
 import com.health.community.repository.UserRepository;
+import com.health.community.vo.FolloweePageVO;
+import com.health.community.vo.FollowerPageVO;
 import com.health.community.vo.UserVO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -86,14 +90,12 @@ public class FollowService {
     }
 
 
-    public List<UserVO> getFollowee(int page){
+    public FolloweePageVO getFollowee(int page){
         Integer followerId = UserContext.getCurrentUserId();
-        Pageable pageable = PageRequest.of(Math.max(0, page - 1), PAGE_SIZE);
+        Pageable pageable = PageRequest.of(Math.max(0, page - 1), PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createTime"));
+
         Page<Integer> followeeIdPage = followRepository.findFolloweeIdsByFollowerId(followerId, pageable);
 
-        if (followeeIdPage.isEmpty()) {
-            return Collections.emptyList();
-        }
 
         // 根据 ID 列表批量查用户（不用分页，因为传的已经是分页数量的id了）
         List<User> users = userRepository.findAllById(followeeIdPage.getContent());
@@ -103,22 +105,23 @@ public class FollowService {
                 .collect(Collectors.toMap(User::getUserId, Function.identity()));
 
         // 按 followeeIdPage 的顺序构建结果（避免顺序错乱）
-        return followeeIdPage.getContent().stream()
+        List<UserVO> userVOList = followeeIdPage.getContent().stream()
                 .map(userMap::get)
                 .filter(Objects::nonNull)
                 .map(this::convertToUserVO) // 提取为方法
                 .collect(Collectors.toList());
+        return FolloweePageVO.builder().page(page)
+                .hasNext(followeeIdPage.hasNext())
+                .followees(userVOList).build();
     }
 
 
-    public List<UserVO> getFollower(int page){
+    public FollowerPageVO getFollower(int page){
         Integer followeeId = UserContext.getCurrentUserId();
-        Pageable pageable = PageRequest.of(Math.max(0, page - 1), PAGE_SIZE);
+        Pageable pageable = PageRequest.of(Math.max(0, page - 1), PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createTime"));
+
         Page<Integer> followerIdPage = followRepository.findFollowerIdsByFolloweeId(followeeId, pageable);
 
-        if (followerIdPage.isEmpty()) {
-            return Collections.emptyList();
-        }
 
         // 根据 ID 列表批量查用户（不用分页，因为传的已经是分页数量的id了）
         List<User> users = userRepository.findAllById(followerIdPage.getContent());
@@ -128,11 +131,14 @@ public class FollowService {
                 .collect(Collectors.toMap(User::getUserId, Function.identity()));
 
         // 按 followerIdPage 的顺序构建结果（避免顺序错乱）
-        return followerIdPage.getContent().stream()
+        List<UserVO> userVOList = followerIdPage.getContent().stream()
                 .map(userMap::get)
                 .filter(Objects::nonNull)
                 .map(this::convertToUserVO) // 提取为方法
                 .collect(Collectors.toList());
+        return FollowerPageVO.builder().page(page)
+                .hasNext(followerIdPage.hasNext())
+                .followers(userVOList).build();
     }
 
     private UserVO convertToUserVO(User user) {

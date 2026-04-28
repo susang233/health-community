@@ -1,5 +1,6 @@
 package com.health.community.controller.admin;
 
+import com.health.community.common.annotation.RequireRole;
 import com.health.community.common.enumeration.PostStatus;
 import com.health.community.common.result.Result;
 import com.health.community.dto.PostReviewDTO;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/admin/post")
 @RequiredArgsConstructor
 @Validated
+@RequireRole({"SUPER_ADMIN", "ADMIN"})
 public class AdminPostController {
 
     private final AdminPostService adminPostService;

@@ -14,4 +14,19 @@ public interface FoodEsRepository extends ElasticsearchRepository<FoodDoc, Long>
     Page<FoodDoc> searchFuzzyByName(String name, Pageable pageable);
     @Query("{\"match\": {\"name\": {\"query\": \"?0\", \"operator\": \"and\"}}}")
     Page<FoodDoc> searchStrictByName(String name, Pageable pageable);
+
+    @Query("""
+        {
+          "bool": {
+            "must": [
+              { "match": { "name": { "query": "?0", "operator": "and" } } }
+            ],
+            "filter": [
+              { "term": { "hidden": false } }
+            ]
+          }
+        }
+        """)
+    Page<FoodDoc> searchStrictByNameAndHiddenFalse(String name, Pageable pageable);
+
 }

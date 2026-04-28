@@ -52,9 +52,10 @@ public class WebConfig implements WebMvcConfigurer {
                         "/admin/login",
                         "/user/register",
                         "/user/login",
-                        "/user/check-username"
+                        "/user/check-username",
                         // 示例：食物搜索可公开（如果不需要登录）
                         // 后续可在此添加更多公开接口
+                        "/h2-console/**"
                 );
     }
     @Bean

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.health.community.common.clients.boohee.BooHeeClient;
 import com.health.community.common.clients.boohee.dto.BooHeeFoodResponse;
 import com.health.community.common.clients.boohee.dto.BooHeeSearchResponse;
+import com.health.community.common.enumeration.DataSource;
 import com.health.community.common.exception.BusinessException;
 
 import com.health.community.common.util.CacheKeyUtils;
@@ -14,6 +15,7 @@ import com.health.community.repository.FoodRepository;
 import com.health.community.vo.FoodDetailVO;
 import com.health.community.vo.FoodSearchVO;
 import com.health.community.vo.FoodVO;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,10 +24,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -48,6 +47,8 @@ public class FoodService {
 
     private final static int SIZE=20;
 
+    private final FileStorageService fileStorageService;
+
 
     // 搜索
     public FoodSearchVO searchFood(String q, Integer page) {
@@ -65,7 +66,7 @@ public class FoodService {
 
         // 2. 先查 ES
         Pageable pageable = PageRequest.of(page - 1, SIZE);
-        Page<FoodDoc> esPage = foodEsRepository.searchStrictByName(q, pageable);
+        Page<FoodDoc> esPage = foodEsRepository.searchStrictByNameAndHiddenFalse(q, pageable);//过滤掉隐藏数据
         FoodSearchVO result;
 
         boolean isFirstPage = (page == 1);
@@ -88,9 +89,14 @@ public class FoodService {
                 if (items == null || items.isEmpty()) break;
                 allItems.addAll(items);
             }
+            Map<String, BooHeeSearchResponse.BooHeeFoodItem> uniqueItems = new LinkedHashMap<>();
+            for (BooHeeSearchResponse.BooHeeFoodItem item : allItems) {
+                uniqueItems.putIfAbsent(item.getCode(), item);
+            }
+            List<BooHeeSearchResponse.BooHeeFoodItem> deduplicatedItems = new ArrayList<>(uniqueItems.values());
 
             // 保存 DB + ES
-            saveBooHeeFoodsToDbAndEs(allItems);
+            saveBooHeeFoodsToDbAndEs(deduplicatedItems);
 
             // 直接返回第一页，不查 ES（解决延迟）
             List<BooHeeSearchResponse.BooHeeFoodItem> pageItems = allItems.stream()
@@ -112,7 +118,7 @@ public class FoodService {
 
         } else {
             // 数据足够 或 不是第一页 → 走 ES
-            result = convertToVO(esPage, page);
+            result = convertToFoodSearchVO(esPage, page);
         }
 
         // 缓存
@@ -148,6 +154,9 @@ public class FoodService {
                 foodsToSave.add(buildFoodFromItem(item));
             } else {
                 Food existing = existingOpt.get();
+                if (Boolean.TRUE.equals(existing.getIsLocked())) {
+                    continue; // 管理员修改过，跳过三方同步更新
+                }
                 if (isFoodChanged(existing, item)) {
                     updateFoodFromItem(existing, item);
                     foodsToSave.add(existing);
@@ -177,6 +186,9 @@ public class FoodService {
                 .healthLight(item.getHealthLight())
                 .caloriesPer100g(item.getCalorieValue())
                 .isLiquid(item.getIsLiquid())
+                .dataSource(DataSource.BOOHEE)
+                .isLocked(false)
+                .hidden(false)
 
                 .build();
     }
@@ -195,29 +207,7 @@ public class FoodService {
                 !Objects.equals(existing.getIsLiquid(), newItem.getIsLiquid());
     }
 
-    /**
-     * 判断数据有没有更新
-     * @param existing
-     * @param newItem
-     * @return
-     */
-    private boolean isFoodChanged(Food existing, BooHeeFoodResponse newItem) {
-        // 从 calory 列表找 total_calory
-        Double newCalories = extractTotalCalories(newItem);
 
-        // 从 baseIngredients 找 protein/fat/carbs
-        Double newProtein = findBaseIngredientValue(newItem.getBaseIngredients(), "protein");
-        Double newFat = findBaseIngredientValue(newItem.getBaseIngredients(), "fat");
-        Double newCarbs = findBaseIngredientValue(newItem.getBaseIngredients(), "carbohydrate");
-
-        return !Objects.equals(existing.getName(), newItem.getFood().getName()) ||
-                !Objects.equals(existing.getImageUrl(), newItem.getFood().getThumbImageUrl()) ||
-                !Objects.equals(existing.getHealthLight(), newItem.getHealthLight()) ||
-                !Objects.equals(existing.getCaloriesPer100g(), newCalories) ||
-                !Objects.equals(existing.getProteinPer100g(), newProtein) ||
-                !Objects.equals(existing.getFatPer100g(), newFat) ||
-                !Objects.equals(existing.getCarbsPer100g(), newCarbs);
-    }
 
     private Double findBaseIngredientValue(List<BooHeeFoodResponse.BaseIngredients> list, String nameEn) {
         if (list == null) return null;
@@ -234,7 +224,7 @@ public class FoodService {
      * @param currentPage
      * @return
      */
-    private FoodSearchVO convertToVO(Page<FoodDoc> page, int currentPage) {
+    private FoodSearchVO convertToFoodSearchVO(Page<FoodDoc> page, int currentPage) {
         List<FoodVO> foods = page.getContent().stream()
                 .map(doc -> {
                     FoodVO vo = new FoodVO();
@@ -281,6 +271,10 @@ public class FoodService {
         //从数据库查询
         Optional<Food> foodOpt = foodRepository.findByCode(code);
         Food food = foodOpt.orElse(null);
+
+        if (food != null && Boolean.TRUE.equals(food.getHidden())) {
+            throw new BusinessException("食物不存在或已隐藏");
+        }
         //  判断是否需要调用薄荷 API（缺少任一关键营养字段）
         boolean needFetchFromApi = food == null ||
                 food.getCaloriesPer100g() == null ||
@@ -380,4 +374,25 @@ public class FoodService {
        return foodRepository.findByCode(code)
                .orElseThrow(()->new BusinessException("食物不存在！"));
     }
+   /* @PostConstruct//只运行一次
+    public void initEsHiddenField() {
+        log.info("=== 开始初始化 ES 食物 hidden 字段 ===");
+
+        // 1. 从 MySQL 查询所有食物
+        List<Food> allFoods = foodRepository.findAll();
+
+        // 2. 转成 ES 文档（自动携带 hidden=false）
+        List<FoodDoc> docList = allFoods.stream()
+                .map(Food::toFoodDoc)
+                .toList();
+
+        // 3. 批量保存到 ES
+        foodEsRepository.saveAll(docList);
+
+        log.info("=== ES 初始化完成，共 {} 条数据", docList.size());
+    }*/
+
+
 }
+
+

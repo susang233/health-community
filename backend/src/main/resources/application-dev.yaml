@@ -5,14 +5,17 @@ app:
   post:
     allowed-image-domains:
       - "http://localhost:9000/health-community-dev/"        # 本地 MinIO
-
+  food:
+    allowed-image-domains:
+      - "http://localhost:9000/health-community-dev/"        # 本地 MinIO
+      - "https://f.boohee.cn/"  #薄荷
 
 
 
 spring:
   # 数据源（H2）
   datasource:
-    url: jdbc:h2:file:./data/community_dev;MODE=MySQL;AUTO_SERVER=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:file:./data/community_dev;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;LOCK_TIMEOUT=10000
     username: sa
     password: ""
     driver-class-name: org.h2.Driver
@@ -49,6 +52,12 @@ server:
   error:
     include-stacktrace: always
     include-message: always
+
+  servlet:
+    # 关闭默认安全头（仅开发环境！）
+    headers:
+      frame-options:
+        enabled: false
 
 logging:
   level:
