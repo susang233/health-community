@@ -48,7 +48,8 @@ pipeline {
         sh '''
           set -euxo pipefail
           cd backend
-          docker compose -f docker-compose.yaml up -d
+          # IMPORTANT: do not start jenkins service from inside Jenkins itself.
+          docker compose -f docker-compose.yaml up -d mysql redis elasticsearch minio
         '''
       }
     }
@@ -162,7 +163,8 @@ pipeline {
       sh '''
         set +e
         cd backend
-        docker compose -f docker-compose.yaml down -v
+        # IMPORTANT: do not stop jenkins service from inside Jenkins itself.
+        docker compose -f docker-compose.yaml stop mysql redis elasticsearch minio
         true
       '''
     }

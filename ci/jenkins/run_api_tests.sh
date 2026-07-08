@@ -5,7 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 echo "[1/5] Start dependencies (docker compose)"
 cd "$ROOT_DIR/backend"
-docker compose -f docker-compose.yaml up -d
+# IMPORTANT: do not manage jenkins service from inside Jenkins itself.
+docker compose -f docker-compose.yaml up -d mysql redis elasticsearch minio
 
 echo "[2/5] Start backend (Spring Boot test profile)"
 nohup mvn -q -DskipTests spring-boot:run -Dspring-boot.run.profiles=test > "$ROOT_DIR/backend-test.log" 2>&1 &
