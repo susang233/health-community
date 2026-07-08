@@ -37,11 +37,14 @@ def backend_available() -> None:
     """
     try:
         # 随便打一个轻量接口，能连上就说明 backend 在跑
-        requests.get(
+        resp = requests.get(
             f"{config.base_url}/user/check-username",
             params={"username": "health_check"},
             timeout=3,
         )
+        # 如果打到了别的服务（例如 Jenkins 本身）通常会是 403/302/404，这里直接跳过集成测试避免误判
+        if resp.status_code != 200:
+            pytest.skip(f"backend 响应异常 status_code={resp.status_code} base_url={config.base_url}")
     except requests.RequestException as exc:
         pytest.skip(f"backend 未启动或不可达（{config.base_url}），跳过集成测试: {exc}")
 

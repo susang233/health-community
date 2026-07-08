@@ -9,12 +9,15 @@ cd "$ROOT_DIR/backend"
 docker compose -f docker-compose.yaml up -d mysql redis elasticsearch minio
 
 echo "[2/5] Start backend (Spring Boot test profile)"
-nohup mvn -q -DskipTests spring-boot:run -Dspring-boot.run.profiles=test > "$ROOT_DIR/backend-test.log" 2>&1 &
+chmod +x mvnw
+nohup ./mvnw -q -DskipTests spring-boot:run -Dspring-boot.run.profiles=test -Dserver.port=8082 -Dspring-boot.run.arguments="--server.port=8082" > "$ROOT_DIR/backend-test.log" 2>&1 &
 
 echo "[3/5] Wait for backend health"
 for i in $(seq 1 60); do
   # NOTE: /actuator/health 在当前环境下可能返回 403，所以使用公开接口作为就绪探针。
-  if curl -fsS "http://localhost:8080/user/check-username?username=health_check" >/dev/null; then
+  code="$(curl -sS -o /dev/null -w \"%{http_code}\" \"http://localhost:8082/user/check-username?username=health_check\" || echo 000)"
+  echo "health check attempt=$i http_code=$code"
+  if [ "$code" = "200" ]; then
     echo "backend is healthy"
     break
   fi
@@ -30,6 +33,9 @@ pip install -r tests/requirements.txt
 
 echo "[5/5] Run integration with xdist + allure"
 export TEST_ENV="${TEST_ENV:-test}"
+export DB_HOST="${DB_HOST:-mysql}"
+export DB_URL="${DB_URL:-jdbc:mysql://mysql:3306/community?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8&allowPublicKeyRetrieval=true}"
+export BASE_URL="${BASE_URL:-http://localhost:8082}"
 python run.py --integration --allure -- ${PYTEST_XDIST:--n auto}
 
 echo "Done. Allure results in auto_test/reports/allure-results"

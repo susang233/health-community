@@ -15,11 +15,17 @@ pipeline {
     // Backend test profile uses these envs (see backend application-test.yaml)
     DB_USERNAME = 'root'
     DB_PASSWORD = '123456'
-    DB_URL = 'jdbc:mysql://localhost:3306/community?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8&allowPublicKeyRetrieval=true'
+    // Jenkins 容器里跑后端时，DB_URL 不能用 localhost，要使用 docker-compose 的服务名
+    DB_HOST = 'mysql'
+    DB_URL = 'jdbc:mysql://mysql:3306/community?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8&allowPublicKeyRetrieval=true'
 
     // auto_test config
     TEST_ENV = 'test'
     PIP_DISABLE_PIP_VERSION_CHECK = '1'
+
+    // Jenkins 容器内部：8080 已被 Jenkins 占用
+    // 后端改用 8082，并让 auto_test 的 base_url 指向同一端口
+    BASE_URL = 'http://localhost:8082'
   }
 
   stages {
@@ -65,12 +71,15 @@ pipeline {
           cd backend
 
           # Start backend in background. Logs will be archived if build fails.
-          nohup mvn -q -DskipTests spring-boot:run -Dspring-boot.run.profiles=test > ../backend-test.log 2>&1 &
+          chmod +x mvnw
+          nohup ./mvnw -q -DskipTests spring-boot:run -Dspring-boot.run.profiles=test -Dserver.port=8082 -Dspring-boot.run.arguments="--server.port=8082" > ../backend-test.log 2>&1 &
 
           # Wait until backend is up.
           # NOTE: /actuator/health 在当前环境下可能返回 403，所以使用公开接口 /user/check-username 作为就绪探针。
           for i in $(seq 1 60); do
-            if curl -fsS "http://localhost:8080/user/check-username?username=health_check" >/dev/null; then
+            code="$(curl -sS -o /dev/null -w \"%{http_code}\" \"http://localhost:8082/user/check-username?username=health_check\" || echo 000)"
+            echo "health check attempt=$i http_code=$code"
+            if [ "$code" = "200" ]; then
               echo "backend is healthy"
               exit 0
             fi
@@ -128,6 +137,11 @@ pipeline {
           # If not configured, tests depending on them may fail.
           : "${USER_USERNAME:=}"
           : "${USER_PASSWORD:=}"
+          if [ -z "${USER_USERNAME}" ] || [ -z "${USER_PASSWORD}" ]; then
+            echo "Missing USER_USERNAME/USER_PASSWORD in Jenkins env."
+            echo "Please set them in this Job (or provide auto_test/.env in the repo, not recommended for secrets)."
+            exit 1
+          fi
 
           python run.py --integration --allure -- ${PYTEST_XDIST}
         '''

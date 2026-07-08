@@ -43,7 +43,9 @@ class Config:
 
     @property
     def base_url(self):
-        return self.conf["base_url"]
+        # Jenkins/CI 场景下需要把后端端口从 8080 改为其他值（避免与 Jenkins 冲突）
+        # 例如在 Jenkinsfile 里设置 BASE_URL=http://localhost:8082。
+        return os.getenv("BASE_URL", self.conf["base_url"])
 
     @property
     def default_headers(self):
