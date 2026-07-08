@@ -1,0 +1,42 @@
+# 用例格式说明（复制此文件编写真实用例，不要直接执行本文件）
+#
+# 单条用例结构：
+#   case_id   - 唯一标识，供 pytest ids 与报告使用
+#   name      - 用例中文名
+#   module    - 模块分类（user / admin / post ...）
+#   steps     - 步骤列表，按顺序执行（Runner 后续实现）
+#
+# 每个 step：
+#   name      - 步骤名
+#   request   - HTTP 请求（method / url / headers / json / params / files）
+#
+# 文件上传（multipart/form-data）示例：
+#   files:
+#     - field: files          # 对应后端 @RequestParam 名称
+#       path: testdata/post1.png   # 相对 auto_test 根目录
+#   validate  - 断言规则列表（Runner 后续实现）
+#   extract   - 从响应提取字段到变量池
+#   db_validate - 可选，SQL 查库断言（需 database.enabled=true）
+#   teardown  - 可选，用例级清理 SQL（写在 steps 同级）
+#
+# 占位符（Runner 第二步实现 render）：
+#   ${USER_USERNAME}  - 读取 .env / 环境变量
+#   ${token}          - 读取变量池中上一步 extract 的值
+
+case_id: example_case
+name: 示例用例
+module: example
+steps:
+  - name: 示例请求
+    request:
+      method: POST
+      url: /user/login
+      json:
+        username: ${USER_USERNAME}
+        password: ${USER_PASSWORD}
+        rememberMe: true
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.code, 200]
+    extract:
+      token: body.data.token

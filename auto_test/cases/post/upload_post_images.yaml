@@ -1,0 +1,31 @@
+case_id: post_upload_images
+name: 登录后上传发帖图片
+module: post
+steps:
+  - name: 用户登录
+    request:
+      method: POST
+      url: /user/login
+      json:
+        username: ${USER_USERNAME}
+        password: ${USER_PASSWORD}
+        rememberMe: true
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.code, 200]
+    extract:
+      token: body.data.token
+
+  - name: 上传发帖图片
+    request:
+      method: POST
+      url: /user/post/upload-post-images
+      headers:
+        Authorization: Bearer ${token}
+      files:
+        - field: files
+          path: testdata/post1.png
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.code, 200]
+      - type_match: [body.data, list]

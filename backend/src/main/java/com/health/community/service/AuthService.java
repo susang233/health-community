@@ -183,7 +183,7 @@ public class AuthService {
             sb.append(all.charAt(random.nextInt(all.length())));
         }
 
-        // 打乱顺序（可选）
+        // 打乱顺序
         char[] chars = sb.toString().toCharArray();
         for (int i = chars.length - 1; i > 0; i--) {
             int j = random.nextInt(i + 1);

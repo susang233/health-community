@@ -154,15 +154,10 @@ export const adminLogout = (): void => {
   sessionStorage.removeItem('admin');
 };
 
-
 export const getAdminRole = (): string | null => {
-  // 先从 localStorage 拿
-  let role = localStorage.getItem("role");
-  if (role) return role;
-
-  // 再从 sessionStorage 拿
-  role = sessionStorage.getItem("role");
-  return role;
+  const admin = getAdmin();
+  if (!admin) return null;
+  return admin.role;
 };
 
 // 判断是否超级管理员

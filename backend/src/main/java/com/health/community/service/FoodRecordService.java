@@ -177,24 +177,18 @@ public class FoodRecordService {
             }
         }
         //获取对应时期的所有饮食记录
-
         Integer recommendedCalories = healthService.getRecommendedCalories(userId);
         //根据userId和记录日期查出对应记录
-
-
         // 构造当天的起止时间
         LocalDateTime startOfDay = recordDate.atStartOfDay(); // 00:00:00
         LocalDateTime endOfDay = recordDate.atTime(LocalTime.MAX); // 23:59:59.999999999
-
         // 查询当天所有记录
         List<FoodRecord> records = foodRecordRepository
                 .findByUserIdAndRecordTimeBetween(userId, startOfDay, endOfDay);
-
 //处理空数据
         if (records.isEmpty()) {
             return buildEmptyDailyDietVO(recordDate); // 处理空数据情况
         }
-
         //组装VO
         //  按 mealType 分组
         Map<MealType, List<FoodRecord>> groupedByMeal = records.stream()
@@ -386,14 +380,12 @@ public class FoodRecordService {
     public NutritionGoal calculateNutritionGoal(Integer recommendedCalories) {
         double totalCal = recommendedCalories;
 
-        // 蛋白质：55% 热量，每克 4 kcal
-        double proteinGrams = (totalCal * 0.55) / 4.0;
-
-        // 脂肪：20% 热量，每克 9 kcal
-        double fatGrams = (totalCal * 0.20) / 9.0;
-
-        // 碳水：25% 热量，每克 4 kcal
-        double carbsGrams = (totalCal * 0.25) / 4.0;
+        // 蛋白质：15% 热量，每克 4 kcal
+        double proteinGrams = (totalCal * 0.15) / 4.0;
+        // 脂肪：25% 热量，每克 9 kcal
+        double fatGrams = (totalCal * 0.25) / 9.0;
+        // 碳水：60% 热量，每克 4 kcal
+        double carbsGrams = (totalCal * 0.60) / 4.0;
 
         // 四舍五入保留一位小数（或整数，根据需求）
         return NutritionGoal.builder()

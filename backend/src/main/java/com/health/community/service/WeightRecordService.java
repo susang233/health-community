@@ -1,6 +1,9 @@
 package com.health.community.service;
 
 import com.health.community.common.context.UserContext;
+import com.health.community.common.util.CacheKeyUtils;
+import com.health.community.dto.HealthProfileDTO;
+import com.health.community.entity.HealthProfile;
 import com.health.community.entity.WeightRecord;
 import com.health.community.repository.HealthProfileRepository;
 import com.health.community.repository.UserRepository;
@@ -8,6 +11,7 @@ import com.health.community.repository.WeightRecordRepository;
 import com.health.community.vo.WeightHistoryVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -21,35 +25,31 @@ import java.util.Optional;
 @RequiredArgsConstructor // 自动生成构造器
 public class WeightRecordService {
     private final WeightRecordRepository weightRecordRepository;
-
+    private final HealthService healthService;
+    private final RedisTemplate<String, String> redisTemplate;
     public List<WeightHistoryVO> getWeightHistory(LocalDate startDate, LocalDate endDate) {
         Integer userId = UserContext.getCurrentUserId();
         // 从数据库查出用户在 [startDate, endDate] 范围内的所有真实记录（按日期升序）
         List<WeightRecord> records = weightRecordRepository
                 .findByUserIdAndRecordDateBetweenOrderByRecordDateAsc
                         (userId, startDate, endDate);
-
-        // 如果一条记录都没有，返回空列表 or 报错（根据业务定）
+        // 如果一条记录都没有，返回空列表
         if (records.isEmpty()) {
             return Collections.emptyList();
         }
-
         // 构建完整日期序列，并填充体重
         List<WeightHistoryVO> result = new ArrayList<>();
         LocalDate currentDate = startDate;
-
         // 找到第一条记录之前的“基准体重”（用于填充起始段）
         Double lastKnownWeight = findLastWeightBefore(userId, startDate);
         if (lastKnownWeight == null) {
             // 如果连历史记录都没有，用第一条记录的体重向前填充
             lastKnownWeight = records.get(0).getWeight();
         }
-
         int recordIndex = 0;
         while (!currentDate.isAfter(endDate)) {
             WeightHistoryVO vo = new WeightHistoryVO();
             vo.setDate(currentDate);
-
             // 如果当前日期有真实记录
             if (recordIndex < records.size() &&
                     records.get(recordIndex).getRecordDate().equals(currentDate)) {
@@ -58,7 +58,6 @@ public class WeightRecordService {
             }
             // 无论是否有记录，都使用 lastKnownWeight（即“保持上次值”）
             vo.setWeight(lastKnownWeight);
-
             result.add(vo);
             currentDate = currentDate.plusDays(1);
         }
@@ -97,6 +96,18 @@ public class WeightRecordService {
                     .build();
             weightRecordRepository.save(record);
         }
+        HealthProfile healthProfile = healthService.findHealthProfileByUserId(userId);
+        healthService.saveHealthProfile(
+                HealthProfileDTO.builder()
+                .gender(healthProfile.getGender())
+                .height(healthProfile.getHeight())
+                .birthday(healthProfile.getBirthday())
+                .activityLevel(healthProfile.getActivityLevel())
+                .currentWeight(weight)
+                .targetWeight(healthProfile.getTargetWeight())
+                .build());
+        String cacheKey = CacheKeyUtils.getUserDailyIntakeKey(userId, recordDate);
+        redisTemplate.delete(cacheKey);
     }
 
     public WeightHistoryVO getLatestWeight() {

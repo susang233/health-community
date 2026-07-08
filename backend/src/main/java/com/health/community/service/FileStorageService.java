@@ -19,4 +19,7 @@ public interface FileStorageService {
 
     String uploadPostImage(MultipartFile file);
     String uploadFile(MultipartFile file, String prefix);
+    // 根据objectKey 生成临时签名访问URL
+    String getPresignedUrl(String objectKey);
+    String parseObjectKeyFromUrl(String fullUrl, String bucket);
 }

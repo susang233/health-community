@@ -1,0 +1,28 @@
+case_id: food_daily_summary
+name: 登录后查看今日饮食概要
+module: food
+steps:
+  - name: 用户登录
+    request:
+      method: POST
+      url: /user/login
+      json:
+        username: ${USER_USERNAME}
+        password: ${USER_PASSWORD}
+        rememberMe: true
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.code, 200]
+    extract:
+      token: body.data.token
+
+  - name: 获取今日饮食概要
+    request:
+      method: GET
+      url: /user/food-record/daily/summary
+      headers:
+        Authorization: Bearer ${token}
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.code, 200]
+      - type_match: [body.data, dict]

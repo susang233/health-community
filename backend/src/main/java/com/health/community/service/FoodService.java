@@ -53,7 +53,6 @@ public class FoodService {
     // 搜索
     public FoodSearchVO searchFood(String q, Integer page) {
         String cacheKey = CacheKeyUtils.getFoodSearchKey(q, page, SIZE);
-
         // 1. 先读缓存
         String cachedJson = redisTemplate.opsForValue().get(cacheKey);
         if (cachedJson != null) {
@@ -63,24 +62,16 @@ public class FoodService {
                 log.warn("Redis 缓存解析失败，key={}", cacheKey, e);
             }
         }
-
-        // 2. 先查 ES
+        // 2. 查 ES
         Pageable pageable = PageRequest.of(page - 1, SIZE);
         Page<FoodDoc> esPage = foodEsRepository.searchStrictByNameAndHiddenFalse(q, pageable);//过滤掉隐藏数据
         FoodSearchVO result;
-
         boolean isFirstPage = (page == 1);
-
         // 只有 第一页 并且 结果满20条，才不走三方
         boolean esEnoughData = esPage.hasContent() && esPage.getNumberOfElements() >= SIZE;
-
-
-        // 规则：
         // 是第一页 + ES 数据不足（不满20条）→ 调用三方
-
         if (isFirstPage && !esEnoughData) {
             log.info("【首页数据不足】调用三方API: q={}", q);
-
             // 拉 3 页
             List<BooHeeSearchResponse.BooHeeFoodItem> allItems = new ArrayList<>();
             for (int i = 1; i <= 3; i++) {

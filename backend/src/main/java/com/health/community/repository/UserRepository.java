@@ -40,6 +40,13 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("UPDATE User u SET u.followersCount = GREATEST(COALESCE(u.followersCount, 0) - 1, 0) WHERE u.userId = :userId")
     void decrementFollowersCount(@Param("userId") Integer userId);
 
+    @Modifying
+    @Query("UPDATE User u SET u.postCount = COALESCE(u.postCount, 0) + 1 WHERE u.userId = :userId")
+    void incrementPostCount(@Param("userId") Integer userId);
+    @Modifying
+    @Query("UPDATE User u SET u.postCount = GREATEST(COALESCE(u.postCount, 0) - 1, 0) WHERE u.userId = :userId")
+    void decrementPostCount(@Param("userId") Integer userId);
+
 
     boolean existsByRole(Role role);
 

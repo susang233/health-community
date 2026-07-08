@@ -32,10 +32,11 @@ public class PostVO implements Serializable {
     private String profileText;
     private String content; // 帖子文字（最多1000字）
     private PostStatus status; // PENDING, APPROVED, REJECTED
+    private String rejectReason;
     private Integer likeCount; // 缓存点赞数（避免 COUNT）
     private Boolean isLike;//是否点赞帖子
     private Integer commentCount;// 缓存评论数
-    private List<PostImage> postImageList;
+    private List<PostImageVO> postImageList;
     private LocalDateTime createTime;
 
 

@@ -1,0 +1,12 @@
+base_url: "http://localhost:8080"
+headers:
+  Content-Type: "application/json"
+timeout: 30
+
+database:
+  enabled: true
+  host: localhost
+  port: 3306
+  name: community
+  user: root
+  charset: utf8mb4

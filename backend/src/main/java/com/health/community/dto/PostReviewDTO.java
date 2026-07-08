@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 public class PostReviewDTO {
     private Long postId;
+    private Integer userId;
     private PostStatus status; // 必须是 APPROVED 或 REJECTED
     private String rejectReason; // 当 status == REJECTED 时必填
 }

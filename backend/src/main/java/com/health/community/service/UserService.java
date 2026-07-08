@@ -46,8 +46,19 @@ public class UserService {
     }
 
     public User findByUserId(Integer userId) {
-        return userRepository.findByUserId(userId)
+        User user= userRepository.findByUserId(userId)
                 .orElseThrow(() -> new BusinessException(ACCOUNT_ERROR));
+        // 头像 objectKey 转 签名URL
+        String avatarKey = user.getAvatarUrl();
+        if (avatarKey != null && !avatarKey.isBlank()) {
+            try {
+                user.setAvatarUrl(fileStorageService.getPresignedUrl(avatarKey));
+            } catch (Exception e) {
+                log.error("生成头像链接失败，key:{}", avatarKey, e);
+                user.setAvatarUrl("");
+            }
+        }
+        return user;
     }
 
     // 唯一性校验（供 check-username 接口调用）
@@ -110,7 +121,10 @@ public class UserService {
             user.setAvatarUrl(avatarUrl);
             User save = userRepository.save(user);
 
-            return save.getAvatarUrl();
+
+            return fileStorageService.getPresignedUrl(save.getAvatarUrl());
+
+
         } catch (Exception e) {
             log.error("头像上传失败", e);
             throw new BusinessException("上传失败");
@@ -159,6 +173,7 @@ public class UserService {
                 .nickName(user.getNickName())
                 .followersCount(user.getFollowersCount())
                 .followingCount(user.getFollowingCount())
+                .postCount(user.getPostCount())
                 .isFollow(isFollow).build();
     }
 

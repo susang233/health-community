@@ -1,0 +1,7 @@
+base_url: "http://localhost:8080"
+headers:
+  Content-Type: "application/json"
+timeout: 30
+
+database:
+  enabled: false

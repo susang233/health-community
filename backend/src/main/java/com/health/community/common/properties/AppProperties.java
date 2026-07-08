@@ -31,10 +31,10 @@ public class AppProperties {
 
     @Data
     public static class Minio {
-
         private String endpoint;
         private String accessKey;
         private String secretKey;
         private String bucket;
+        private Integer signExpireSeconds;
     }
 }

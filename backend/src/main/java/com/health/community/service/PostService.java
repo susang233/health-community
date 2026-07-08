@@ -15,10 +15,8 @@ import com.health.community.entity.*;
 import com.health.community.repository.PostImageRepository;
 import com.health.community.repository.PostRepository;
 
-import com.health.community.vo.PostIndexVO;
-import com.health.community.vo.PostSummaryVO;
-import com.health.community.vo.PostVO;
-import com.health.community.vo.UserPostVO;
+import com.health.community.repository.UserRepository;
+import com.health.community.vo.*;
 import jakarta.transaction.Transactional;
 
 import lombok.RequiredArgsConstructor;
@@ -56,6 +54,8 @@ public class PostService {
     private final FollowService followService;
     private final PostLikeService postLikeService;
 
+    private final UserRepository userRepository;
+
     @Transactional
     public Long createPost(PostCreateDTO postCreateDTO) {
         Integer userId = UserContext.getCurrentUserId();
@@ -67,38 +67,31 @@ public class PostService {
                 .build();
         post = postRepository.save(post);
 
-        //  现在 imageUrls 是前端传过来的已上传好的 URL 列表
-        List<String> imageUrls = postCreateDTO.getImageUrls(); // 注意字段名同步
-
-        if (imageUrls != null && !imageUrls.isEmpty()) {
-
-            List<String> allowedDomains = appProperties.getPost().getAllowedImageDomains();
-
-
-            for (String url : imageUrls) {
-                boolean isValid = allowedDomains.stream()
-                        .anyMatch(domain -> {
-                            // 确保 domain 以 / 结尾，url 以 domain 开头（避免部分匹配）
-                            String normalizedDomain = domain.endsWith("/") ? domain : domain + "/";
-                            return url.startsWith(normalizedDomain);
-                        });
-                if (!isValid) {
-                    throw new BusinessException("非法图片地址: " + url);
-                }
-            }
-
-            // 保存到 post_image 表
-            Post finalPost = post;
-            List<PostImage> images = IntStream.range(0, imageUrls.size())
-                    .mapToObj(i -> PostImage.builder()
-                            .postId(finalPost.getId())
-                            .imageUrl(imageUrls.get(i))
-                            .sortIndex(i)
-                            .build())
-                    .collect(Collectors.toList());
-            postImageRepository.saveAll(images);
+        // 前端传：objectKey 列表，而非完整URL
+        List<String> imageKeys = postCreateDTO.getImageUrls();
+        if (imageKeys == null || imageKeys.isEmpty()) {
+            return post.getId();
         }
 
+        // 过滤空串、空白串，剔除脏数据
+        List<String> validKeys = imageKeys.stream()
+                .filter(key -> key != null && !key.isBlank())
+                .toList();
+        if (validKeys.isEmpty()) {
+            return post.getId();
+        }
+
+        // 批量组装并保存 PostImage（存 objectKey）
+        Post finalPost = post;
+        List<PostImage> images = IntStream.range(0, validKeys.size())
+                .mapToObj(i -> PostImage.builder()
+                        .postId(finalPost.getId())
+                        .imageUrl(validKeys.get(i)) // 此处字段存 objectKey
+                        .sortIndex(i)
+                        .build())
+                .collect(Collectors.toList());
+
+        postImageRepository.saveAll(images);
         return post.getId();
     }
 
@@ -148,24 +141,47 @@ public class PostService {
 
     }
 
-    private PostSummaryVO convertToPostSummaryVO(Post post,Integer currentUserId,Integer finalUserId) {
+    private PostSummaryVO convertToPostSummaryVO(Post post, Integer currentUserId, Integer finalUserId) {
         List<PostImage> postImageList = postImageRepository.findByPostIdOrderBySortIndexAsc(post.getId());
+
+        // 把 objectKey 转为签名 URL，封装为 VO
+        List<PostImageVO> imageVOList = postImageList.stream()
+                .map(img -> {
+                    PostImageVO vo = new PostImageVO();
+                    vo.setSortIndex(img.getSortIndex());
+                    String objectKey = img.getImageUrl();
+                    if (objectKey != null && !objectKey.isBlank()) {
+                        try {
+                            vo.setImageUrl(fileStorageService.getPresignedUrl(objectKey));
+                        } catch (Exception e) {
+                            log.error("生成列表图片链接失败，objectKey:{}", objectKey, e);
+                            vo.setImageUrl("");
+                        }
+                    }
+                    vo.setId(img.getId());
+                    vo.setPostId(img.getPostId());
+                    return vo;
+                })
+                .toList();
 
         boolean isLike = false;
         if (currentUserId != null) {
-            // 查询当前用户是否已点赞该帖子
             isLike = postLikeService.hasUserLikedPost(currentUserId, post.getId());
         }
-        return PostSummaryVO.builder().id(post.getId())
+
+        return PostSummaryVO.builder()
+                .id(post.getId())
                 .content(post.getContent())
                 .status(post.getStatus())
+                .rejectReason(post.getRejectReason())
                 .likeCount(post.getLikeCount())
                 .isOwnPost(finalUserId != null && finalUserId.equals(currentUserId))
                 .isLike(isLike)
                 .commentCount(post.getCommentCount())
                 .createTime(post.getCreateTime())
                 .updateTime(post.getUpdateTime())
-                .postImageList(postImageList).build();
+                .postImageList(imageVOList) // 使用转换后的 VO 集合
+                .build();
     }
 
 
@@ -210,6 +226,7 @@ public class PostService {
         Map<Long, List<PostImage>> imageMap = postImages.stream()
                 .collect(Collectors.groupingBy(PostImage::getPostId));
 
+
         Map<Integer, User> userMap = userService.findByUserIds(userIds)
                 .stream().collect(Collectors.toMap(User::getUserId, Function.identity()));
 
@@ -237,7 +254,26 @@ public class PostService {
             Map<Integer, HealthProfile> healthMap,
             Map<Integer, TagSetting> tagSettingMap,
             Set<Long> likedPostIds) {
+        Long postId = post.getId();
+        // 拿到当前帖子的所有图片 objectKey
+        List<PostImage> imageList = imageMap.getOrDefault(postId, Collections.emptyList());
 
+        // 遍历 objectKey → 生成签名URL → 封装 VO
+        List<PostImageVO> imageVOList = imageList.stream()
+                .map(img -> {
+                    PostImageVO vo = new PostImageVO();
+                    // img.getImageUrl() 就是数据库存储的 objectKey
+                    String objectKey = img.getImageUrl();
+                    if (objectKey != null && !objectKey.isBlank()) {
+                        // 后端生成永久签名链接
+                        vo.setImageUrl(fileStorageService.getPresignedUrl(objectKey));
+                    }
+                    vo.setSortIndex(img.getSortIndex());
+                    vo.setId(img.getId());
+                    vo.setPostId(img.getPostId());
+                    return vo;
+                })
+                .toList();
         Integer userId = post.getUserId();
         User user = userMap.get(userId);
         HealthProfile healthProfile = healthMap.get(userId);
@@ -256,7 +292,7 @@ public class PostService {
                 .likeCount(post.getLikeCount())
                 .isLike(isLiked)
                 .commentCount(post.getCommentCount())
-                .postImageList(imageMap.getOrDefault(post.getId(), Collections.emptyList()))
+                .postImageList(imageVOList)
                 .createTime(post.getCreateTime())
                 .updateTime(post.getUpdateTime())
                 .build();
@@ -286,7 +322,7 @@ public class PostService {
 
             //  标签（从 tagSetting 获取，若无则跳过）
             if (!CollectionUtils.isEmpty(tagSetting.getTags())) {
-                parts.add(String.join(",", tagSetting.getTags()));
+                parts.add(String.join("|", tagSetting.getTags()));
             }
 
             // 拼接所有部分
@@ -323,12 +359,14 @@ public class PostService {
         // 提取所有 userId 和 postId
         return getPostIndexVO(page, postPage);
     }
+
     @Transactional
-    public boolean updatePost( PostDTO postDTO) {
+    public boolean updatePost(PostDTO postDTO) {
         Integer currentUserId = UserContext.getCurrentUserId();
         Long postId = postDTO.getId();
+        String bucket = appProperties.getMinio().getBucket();
 
-        // 查询帖子并校验归属
+        // 1. 查询帖子 + 权限校验
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException("帖子不存在"));
 
@@ -336,52 +374,40 @@ public class PostService {
             throw new BusinessException("无权编辑该帖子");
         }
 
-
-
-        //  更新内容
-        post.setContent(postDTO.getContent());
-        //非审核状态需要重新进入审核状态
-        if (post.getStatus() != PostStatus.PENDING) {
-            post.setStatus(PostStatus.PENDING);
-
+        PostStatus oldStatus = post.getStatus();
+        if (oldStatus == PostStatus.APPROVED) {
+            userRepository.decrementPostCount(currentUserId);
         }
 
+        // 2. 更新帖子内容 + 重置为待审核
+        post.setContent(postDTO.getContent());
+        post.setStatus(PostStatus.PENDING);
         post = postRepository.save(post);
 
-        // 替换图片统一处理 null 为 空列表
-        List<String> newImageUrls = Optional.ofNullable(postDTO.getImageUrls()).orElse(Collections.emptyList());
+        // 3. 处理图片：统一解析为纯 objectKey
+        List<String> rawList = postDTO.getImageUrls();
+        List<String> validKeys = rawList == null ? Collections.emptyList()
+                : rawList.stream()
+                .filter(str -> str != null && !str.isBlank())
+                .map(url -> fileStorageService.parseObjectKeyFromUrl(url, bucket))
+                .filter(key -> !key.isBlank())
+                .toList();
 
-
-        //  校验新图片域名（复用创建逻辑）
-        if ( !newImageUrls.isEmpty()) {
-            List<String> allowedDomains = appProperties.getPost().getAllowedImageDomains();
-            for (String url : newImageUrls) {
-                boolean isValid = allowedDomains.stream()
-                        .anyMatch(domain -> {
-                            String normalizedDomain = domain.endsWith("/") ? domain : domain + "/";
-                            return url.startsWith(normalizedDomain);
-                        });
-                if (!isValid) {
-                    throw new BusinessException("非法图片地址: " + url);
-                }
-            }
-        }
-
-        // 删除旧图片
+        // 4. 先删除旧图片
         postImageRepository.deleteByPostId(postId);
 
-        //保存新图片
-        if (!newImageUrls.isEmpty()) {
-            Post finalPost = post;
-            List<PostImage> images = IntStream.range(0, newImageUrls.size())
+        // 5. 批量保存纯 objectKey
+        if (!validKeys.isEmpty()) {
+            List<PostImage> images = IntStream.range(0, validKeys.size())
                     .mapToObj(i -> PostImage.builder()
-                            .postId(finalPost.getId())
-                            .imageUrl(newImageUrls.get(i))
+                            .postId(postId)
+                            .imageUrl(validKeys.get(i))
                             .sortIndex(i)
                             .build())
                     .collect(Collectors.toList());
             postImageRepository.saveAll(images);
         }
+
         return true;
     }
     @Transactional
@@ -401,6 +427,7 @@ public class PostService {
 
         //  再删帖子
         postRepository.deleteById(postId);
+        userRepository.decrementPostCount(currentUserId);
         return true;
     }
 
@@ -439,7 +466,19 @@ public class PostService {
             // 查询当前用户是否已点赞该帖子
             isLike = postLikeService.hasUserLikedPost(currentUserId, postId);
         }
-
+        // ========= 核心改动：objectKey → 永久签名URL，组装VO =========
+        List<PostImageVO> imageVOList = postImageList.stream()
+                .map(img -> {
+                    PostImageVO vo = new PostImageVO();
+                    vo.setSortIndex(img.getSortIndex());
+                    String objectKey = img.getImageUrl();
+                    if (objectKey != null && !objectKey.isBlank()) {
+                        // 生成可访问链接
+                        vo.setImageUrl(fileStorageService.getPresignedUrl(objectKey));
+                    }
+                    return vo;
+                })
+                .toList();
         return PostVO.builder().id(post.getId())
                 .userId(userId)
                 .gender(healthProfile.getGender())
@@ -451,9 +490,10 @@ public class PostService {
                 .isOwnPost(userId != null && userId.equals(currentUserId))
                 .isLike(isLike)
                 .status(post.getStatus())
+                .rejectReason(post.getRejectReason())
                 .likeCount(post.getLikeCount())
                 .commentCount(post.getCommentCount())
-                .postImageList(postImageList)
+                .postImageList(imageVOList) // 传入转换后的图片VO列表
                 .createTime(post.getCreateTime())
                 .updateTime(post.getUpdateTime()).build();
 

@@ -1,0 +1,28 @@
+case_id: user_login_success
+name: 用户登录成功
+module: user
+steps:
+  - name: 用户登录
+    request:
+      method: POST
+      url: /user/login
+      json:
+        username: ${USER_USERNAME}
+        password: ${USER_PASSWORD}
+        rememberMe: true
+    validate:
+      # 协议层 + 业务层（必断言）
+      - eq: [status_code, 200]
+      - eq: [body.code, 200]
+      - eq: [body.message, "操作成功"]
+      # 能预期固定值的字段 → 用 eq（含 ${} 的值必须加引号，否则 YAML 解析报错）
+      - eq: [body.data.username, "${USER_USERNAME}"]
+      - eq: [body.data.role, "USER"]
+      # 随机/动态字段（如 nickname「用户945560」）→ 只校验类型，不断言具体值
+      - type_match: [body.data.token, str]
+      - type_match: [body.data.userId, int]
+      - type_match: [body.data.nickname, str]
+      - type_match: [body.data.expiresIn, int]
+    extract:
+      token: body.data.token
+      user_id: body.data.userId

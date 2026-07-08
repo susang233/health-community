@@ -221,11 +221,26 @@ public class AdminFoodService {
         food.setHidden(hidden);
         Food save = foodRepository.save(food);
         foodEsRepository.save(save.toFoodDoc());
-        // 清缓存
+
+        // 1. 删除详情缓存
         redisTemplate.delete(CacheKeyUtils.getFoodDetailKey(code));
+
+        // 2. 删除所有食物搜索缓存（前缀匹配）
+        clearAllFoodSearchCache();
+
         return  save.getHidden();
     }
-
+    /**
+     * 清空所有食物搜索相关的缓存
+     */
+    private void clearAllFoodSearchCache() {
+        String pattern = "food:search:*";
+        Set<String> keys = redisTemplate.keys(pattern);
+        if (keys != null && !keys.isEmpty()) {
+            redisTemplate.delete(keys);
+            log.info("清空食物搜索缓存，共删除 {} 个key", keys.size());
+        }
+    }
 
     @Transactional
     public void deleteFood(String code) {

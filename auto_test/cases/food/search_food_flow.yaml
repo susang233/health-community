@@ -1,0 +1,31 @@
+case_id: food_search_flow
+name: 登录后搜索食物
+module: food
+steps:
+  - name: 用户登录
+    request:
+      method: POST
+      url: /user/login
+      json:
+        username: ${USER_USERNAME}
+        password: ${USER_PASSWORD}
+        rememberMe: true
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.code, 200]
+    extract:
+      token: body.data.token
+
+  - name: 搜索食物
+    request:
+      method: GET
+      url: /user/food/search
+      headers:
+        Authorization: Bearer ${token}
+      params:
+        q: 米饭
+        page: 1
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.code, 200]
+      - type_match: [body.data, dict]

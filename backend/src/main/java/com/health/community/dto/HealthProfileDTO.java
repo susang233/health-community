@@ -2,12 +2,14 @@ package com.health.community.dto;
 import com.health.community.common.enumeration.ActivityLevel;
 import com.health.community.common.enumeration.Gender;
 import jakarta.validation.constraints.*;
+import lombok.Builder;
 import lombok.Data;
 import java.io.Serializable;
 import java.time.LocalDate;
 
 
 @Data
+@Builder
 public class HealthProfileDTO implements Serializable {
 
 

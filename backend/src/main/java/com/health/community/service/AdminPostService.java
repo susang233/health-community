@@ -2,6 +2,7 @@ package com.health.community.service;
 
 import com.health.community.common.enumeration.PostStatus;
 import com.health.community.common.exception.BusinessException;
+import com.health.community.repository.UserRepository;
 import com.health.community.vo.AdminPostDetailVO;
 import com.health.community.dto.PostReviewDTO;
 import com.health.community.entity.Post;
@@ -29,6 +30,7 @@ public class AdminPostService {
 
     private final PostRepository postRepository;
     private final PostImageRepository postImageRepository;
+    private final UserRepository userRepository;
 
 
     // 获取所有帖子列表（分页）
@@ -71,8 +73,14 @@ public class AdminPostService {
         }
 
         PostStatus newStatus = reviewDTO.getStatus();
+        Integer userId = reviewDTO.getUserId();
         if (newStatus == PostStatus.APPROVED) {
             post.setRejectReason(null); // 清空拒绝原因
+            try{
+                userRepository.incrementPostCount(userId);
+            }catch (Exception e){
+                throw new BusinessException("用户账号异常");
+            }
         } else if (newStatus == PostStatus.REJECTED) {
             if (StringUtils.isBlank(reviewDTO.getRejectReason())) {
                 throw new BusinessException("拒绝时必须填写原因");
@@ -84,5 +92,6 @@ public class AdminPostService {
 
         post.setStatus(newStatus);
         postRepository.save(post);
+
     }
 }

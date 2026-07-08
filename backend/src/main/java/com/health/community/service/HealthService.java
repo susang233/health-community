@@ -5,11 +5,14 @@ import com.health.community.common.enumeration.ActivityLevel;
 import com.health.community.common.enumeration.Gender;
 
 import com.health.community.common.exception.BusinessException;
+import com.health.community.common.util.CacheKeyUtils;
 import com.health.community.dto.HealthProfileDTO;
 import com.health.community.entity.HealthProfile;
 import com.health.community.entity.User;
+import com.health.community.entity.WeightRecord;
 import com.health.community.repository.HealthProfileRepository;
 import com.health.community.repository.UserRepository;
+import com.health.community.repository.WeightRecordRepository;
 import com.health.community.vo.HealthProfileVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +32,7 @@ import static com.health.community.common.constant.MessageConstant.ACCOUNT_OR_PA
 @RequiredArgsConstructor // 自动生成构造器
 public class HealthService {
     private final UserRepository userRepository;
-    private final WeightRecordService weightRecordService;
+    private final WeightRecordRepository weightRecordRepository;
     private final HealthProfileRepository healthProfileRepository;
     private static final double WEIGHT_TOLERANCE = 0.05; // 允许 50 克误差
     private final UserService userService;
@@ -66,24 +69,16 @@ public class HealthService {
 
     public HealthProfileVO saveHealthProfile(@Valid HealthProfileDTO healthProfileDTO) {
         log.info("health",healthProfileDTO);
-
         Integer userId = UserContext.getCurrentUserId();
         User user = userService.findByUserId(userId);
-        //计算tdee 和bmi，bmr，推荐热量
-        //bmi
         validateHealthData(healthProfileDTO);//校验参数合法性
         Integer height =  healthProfileDTO.getHeight();
         Double currentWeight = healthProfileDTO.getCurrentWeight();
-
-        // 1. 先计算原始BMI值
+        //  先计算原始BMI值
         double bmi = currentWeight / Math.pow(height / 100.0, 2);
         double bmiRounded = Math.round(bmi * 10) / 10.0;
-
-
         //bmr
         Gender gender = healthProfileDTO.getGender();
-
-
         LocalDate birthday = healthProfileDTO.getBirthday();
         int age = Period.between(birthday, LocalDate.now()).getYears();
         //男
@@ -91,34 +86,26 @@ public class HealthService {
         double bmr = Gender.MALE.equals(healthProfileDTO.getGender())
                 ? 10 * currentWeight + 6.25 *  height - 5 * age + 5
                 : 10 * currentWeight + 6.25 *  height - 5 * age - 161;
-
-
-
         //tdee
         ActivityLevel activityLevel = healthProfileDTO.getActivityLevel();
         int tdee =(int) Math.round(activityLevel.getCoefficient()*bmr);
-
         //每日推荐热量
-
         Double targetWeight = healthProfileDTO.getTargetWeight();
-
         //减肥用户（目标体重<当前体重）
-        //推荐热量=每日总消耗（TDEE）-400
-
+        //推荐热量=每日总消耗（TDEE）-750
         int recommendedCalories;
-
-        if (Math.abs(targetWeight - currentWeight) <= WEIGHT_TOLERANCE) {
+        if (Math.abs(targetWeight - currentWeight) <= WEIGHT_TOLERANCE)//WEIGHT_TOLERANCE=0.05
+        {
             recommendedCalories = tdee;
         } else if (targetWeight < currentWeight) {
-            recommendedCalories = tdee - 400;
+            recommendedCalories = tdee - 750;
         } else {
-            recommendedCalories = tdee + 300;
+            recommendedCalories = tdee + 400;
         }
-
         if (Gender.FEMALE.equals(gender)) {
-            recommendedCalories = Math.max(1200, recommendedCalories);
+            recommendedCalories = Math.max(1000, recommendedCalories);
         } else {
-            recommendedCalories = Math.max(1500, recommendedCalories);
+            recommendedCalories = Math.max(1200, recommendedCalories);
         }
         //通过userId查询该用户是否有健康档案
         Optional<HealthProfile> existingOpt = healthProfileRepository.
@@ -165,8 +152,25 @@ public class HealthService {
 
         }
 
-        // 调用 service 保存当天体重
-        weightRecordService.saveWeightRecord( currentWeight,LocalDate.now());
+        //保存当天体重记录
+
+        Optional<WeightRecord> existing = weightRecordRepository
+                .findByUserIdAndRecordDate(userId, LocalDate.now());
+
+        if (existing.isPresent()) {
+            // 更新现有记录（避免重复插入）
+            WeightRecord record = existing.get();
+            record.setWeight(currentWeight);
+            weightRecordRepository.save(record);
+        } else {
+            // 新增记录
+            WeightRecord record = WeightRecord.builder()
+                    .userId(userId)
+                    .recordDate(LocalDate.now())
+                    .weight(currentWeight)
+                    .build();
+            weightRecordRepository.save(record);
+        }
 
         //返回vo
         return HealthProfileVO.builder()

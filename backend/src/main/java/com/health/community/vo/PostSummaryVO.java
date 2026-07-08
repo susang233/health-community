@@ -26,13 +26,14 @@ public class PostSummaryVO implements Serializable {
 
 
     private PostStatus status; // PENDING, APPROVED, REJECTED
+    private String rejectReason;
 
     private Integer likeCount; // 缓存点赞数（避免 COUNT）
     private Boolean isOwnPost;
     private Boolean isLike;
 
     private Integer commentCount;// 缓存评论数
-    private List<PostImage> postImageList;
+    private List<PostImageVO> postImageList;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

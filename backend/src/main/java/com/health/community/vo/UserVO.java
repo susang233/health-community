@@ -22,6 +22,7 @@ public class UserVO implements Serializable {
     private Integer followersCount ;
 
     private Integer followingCount ;
+    private Integer postCount;
 
 
 

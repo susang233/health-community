@@ -1,0 +1,43 @@
+case_id: user_login_post_flow
+name: 登录后发帖（参数关联演示）
+module: user
+steps:
+  - name: 用户登录
+    request:
+      method: POST
+      url: /user/login
+      json:
+        username: ${USER_USERNAME}
+        password: ${USER_PASSWORD}
+        rememberMe: true
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.code, 200]
+      - type_match: [body.data.token, str]
+    extract:
+      token: body.data.token
+
+  - name: 创建帖子
+    request:
+      method: POST
+      url: /user/post/create
+      headers:
+        Authorization: Bearer ${token}
+      json:
+        content: 自动化测试发帖 - 由框架 extract+render 串联
+        imageUrls: []
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.code, 200]
+      - type_match: [body.data, int]
+    extract:
+      post_id: body.data
+    db_validate:
+      - sql: "SELECT content, status FROM hc_post WHERE id = ${post_id}"
+        expect:
+          - eq: [content, "自动化测试发帖 - 由框架 extract+render 串联"]
+          - eq: [status, "PENDING"]
+
+teardown:
+  - sql: "DELETE FROM hc_post_image WHERE post_id = ${post_id}"
+  - sql: "DELETE FROM hc_post WHERE id = ${post_id}"

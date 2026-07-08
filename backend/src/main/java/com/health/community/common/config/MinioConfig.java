@@ -10,7 +10,8 @@ import org.springframework.context.annotation.Profile;
 
 @Configuration
 
-@Profile("dev")
+
+@Profile({"dev", "test"})
 @RequiredArgsConstructor
 public class MinioConfig {
     private final AppProperties appProperties;

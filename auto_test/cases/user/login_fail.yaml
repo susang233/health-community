@@ -1,0 +1,32 @@
+- case_id: user_login_wrong_password
+  name: 错误密码登录
+  module: user
+  steps:
+    - name: 使用错误密码登录
+      request:
+        method: POST
+        url: /user/login
+        json:
+          username: ${USER_USERNAME}
+          password: WrongPass1!
+          rememberMe: true
+      validate:
+        - eq: [status_code, 200]
+        - eq: [body.code, 400]
+        - contains: [body.message, 账号或密码错误]
+
+- case_id: user_login_empty_username
+  name: 用户名为空
+  module: user
+  steps:
+    - name: 空用户名登录
+      request:
+        method: POST
+        url: /user/login
+        json:
+          username: ""
+          password: ${USER_PASSWORD}
+          rememberMe: true
+      validate:
+        - eq: [status_code, 200]
+        - eq: [body.code, 400]

@@ -1,0 +1,21 @@
+# 测试框架
+pytest>=7.0
+
+# HTTP 请求（接口测试核心）
+requests>=2.31
+
+# 测试报告
+pytest-html>=4.0.0
+allure-pytest>=2.13
+allure-python-commons>=2.13
+
+# 并发执行（可选，加速用例）
+pytest-xdist>=3.0.0
+
+# 数据解析 & 配置
+pyyaml>=6.0.0
+pydantic>=2.0
+python-dotenv>=1.0
+
+# 数据库校验（与 backend 测试库一致）
+pymysql>=1.1.0
