@@ -67,9 +67,10 @@ pipeline {
           # Start backend in background. Logs will be archived if build fails.
           nohup mvn -q -DskipTests spring-boot:run -Dspring-boot.run.profiles=test > ../backend-test.log 2>&1 &
 
-          # Wait until backend is up (Actuator is included in pom.xml).
+          # Wait until backend is up.
+          # NOTE: /actuator/health 在当前环境下可能返回 403，所以使用公开接口 /user/check-username 作为就绪探针。
           for i in $(seq 1 60); do
-            if curl -fsS "http://localhost:8080/actuator/health" >/dev/null; then
+            if curl -fsS "http://localhost:8080/user/check-username?username=health_check" >/dev/null; then
               echo "backend is healthy"
               exit 0
             fi

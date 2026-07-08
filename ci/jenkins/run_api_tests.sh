@@ -13,7 +13,8 @@ nohup mvn -q -DskipTests spring-boot:run -Dspring-boot.run.profiles=test > "$ROO
 
 echo "[3/5] Wait for backend health"
 for i in $(seq 1 60); do
-  if curl -fsS "http://localhost:8080/actuator/health" >/dev/null; then
+  # NOTE: /actuator/health 在当前环境下可能返回 403，所以使用公开接口作为就绪探针。
+  if curl -fsS "http://localhost:8080/user/check-username?username=health_check" >/dev/null; then
     echo "backend is healthy"
     break
   fi
