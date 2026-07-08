@@ -36,7 +36,12 @@ pipeline {
 
     stage('Checkout') {
       steps {
-        checkout scm
+        deleteDir()
+        checkout([
+          $class: 'GitSCM',
+          branches: [[name: '*/main']],
+          userRemoteConfigs: [[url: 'https://github.com/susang233/health-community.git']]
+        ])
       }
     }
 
@@ -157,13 +162,11 @@ pipeline {
 
   post {
     always {
-      archiveArtifacts artifacts: 'backend-test.log', allowEmptyArchive: true
       sh '''
         set +e
         cd backend
-        # IMPORTANT: do not stop jenkins service from inside Jenkins itself.
-        docker compose -f docker-compose.yaml stop mysql redis elasticsearch minio
-        true
+        # best-effort: do not stop jenkins service from inside Jenkins itself.
+        docker compose -f docker-compose.yaml stop mysql redis elasticsearch minio || true
       '''
     }
   }
