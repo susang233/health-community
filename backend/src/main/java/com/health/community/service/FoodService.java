@@ -2,6 +2,7 @@ package com.health.community.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.health.community.common.clients.boohee.BooHeeClient;
+import com.health.community.common.clients.boohee.BooHeeProperties;
 import com.health.community.common.clients.boohee.dto.BooHeeFoodResponse;
 import com.health.community.common.clients.boohee.dto.BooHeeSearchResponse;
 import com.health.community.common.enumeration.DataSource;
@@ -43,6 +44,8 @@ public class FoodService {
 
     private final BooHeeClient booHeeClient;
 
+    private final BooHeeProperties booHeeProperties;
+
     private final ObjectMapper objectMapper;
 
     private final static int SIZE=20;
@@ -71,42 +74,52 @@ public class FoodService {
         boolean esEnoughData = esPage.hasContent() && esPage.getNumberOfElements() >= SIZE;
         // 是第一页 + ES 数据不足（不满20条）→ 调用三方
         if (isFirstPage && !esEnoughData) {
-            log.info("【首页数据不足】调用三方API: q={}", q);
-            // 拉 3 页
-            List<BooHeeSearchResponse.BooHeeFoodItem> allItems = new ArrayList<>();
-            for (int i = 1; i <= 3; i++) {
-                List<BooHeeSearchResponse.BooHeeFoodItem> items =
-                        booHeeClient.searchFoods(q, i, "");
-                if (items == null || items.isEmpty()) break;
-                allItems.addAll(items);
+            if (!isBooHeeConfigured()) {
+                log.info("【薄荷未配置】跳过三方，仅返回 ES: q={}", q);
+                result = convertToFoodSearchVO(esPage, page);
+            } else {
+                try {
+                    log.info("【首页数据不足】调用三方API: q={}", q);
+                    // 拉 3 页
+                    List<BooHeeSearchResponse.BooHeeFoodItem> allItems = new ArrayList<>();
+                    for (int i = 1; i <= 3; i++) {
+                        List<BooHeeSearchResponse.BooHeeFoodItem> items =
+                                booHeeClient.searchFoods(q, i, "");
+                        if (items == null || items.isEmpty()) break;
+                        allItems.addAll(items);
+                    }
+                    Map<String, BooHeeSearchResponse.BooHeeFoodItem> uniqueItems = new LinkedHashMap<>();
+                    for (BooHeeSearchResponse.BooHeeFoodItem item : allItems) {
+                        uniqueItems.putIfAbsent(item.getCode(), item);
+                    }
+                    List<BooHeeSearchResponse.BooHeeFoodItem> deduplicatedItems = new ArrayList<>(uniqueItems.values());
+
+                    // 保存 DB + ES
+                    saveBooHeeFoodsToDbAndEs(deduplicatedItems);
+
+                    // 直接返回第一页，不查 ES（解决延迟）
+                    List<BooHeeSearchResponse.BooHeeFoodItem> pageItems = allItems.stream()
+                            .limit(SIZE)
+                            .collect(Collectors.toList());
+
+                    result = new FoodSearchVO();
+                    result.setPage(1);
+                    result.setFoods(pageItems.stream().map(item -> {
+                        FoodVO vo = new FoodVO();
+                        vo.setCode(item.getCode());
+                        vo.setName(item.getName());
+                        vo.setCaloriesPer100g(item.getCalorieValue());
+                        vo.setImageUrl(item.getThumbImageUrl());
+                        vo.setIsLiquid(item.getIsLiquid());
+                        vo.setHealthLight(item.getHealthLight());
+                        return vo;
+                    }).collect(Collectors.toList()));
+                } catch (Exception e) {
+                    // CI / 无外网 / 密钥无效时不把搜索接口打成 500
+                    log.warn("【薄荷调用失败】回退 ES: q={}", q, e);
+                    result = convertToFoodSearchVO(esPage, page);
+                }
             }
-            Map<String, BooHeeSearchResponse.BooHeeFoodItem> uniqueItems = new LinkedHashMap<>();
-            for (BooHeeSearchResponse.BooHeeFoodItem item : allItems) {
-                uniqueItems.putIfAbsent(item.getCode(), item);
-            }
-            List<BooHeeSearchResponse.BooHeeFoodItem> deduplicatedItems = new ArrayList<>(uniqueItems.values());
-
-            // 保存 DB + ES
-            saveBooHeeFoodsToDbAndEs(deduplicatedItems);
-
-            // 直接返回第一页，不查 ES（解决延迟）
-            List<BooHeeSearchResponse.BooHeeFoodItem> pageItems = allItems.stream()
-                    .limit(SIZE)
-                    .collect(Collectors.toList());
-
-            result = new FoodSearchVO();
-            result.setPage(1);
-            result.setFoods(pageItems.stream().map(item -> {
-                FoodVO vo = new FoodVO();
-                vo.setCode(item.getCode());
-                vo.setName(item.getName());
-                vo.setCaloriesPer100g(item.getCalorieValue());
-                vo.setImageUrl(item.getThumbImageUrl());
-                vo.setIsLiquid(item.getIsLiquid());
-                vo.setHealthLight(item.getHealthLight());
-                return vo;
-            }).collect(Collectors.toList()));
-
         } else {
             // 数据足够 或 不是第一页 → 走 ES
             result = convertToFoodSearchVO(esPage, page);
@@ -121,6 +134,12 @@ public class FoodService {
         }
 
         return result;
+    }
+
+    private boolean isBooHeeConfigured() {
+        String appId = booHeeProperties.getAppId();
+        String appKey = booHeeProperties.getAppKey();
+        return appId != null && !appId.isBlank() && appKey != null && !appKey.isBlank();
     }
     private void updateFoodFromItem(Food food, BooHeeSearchResponse.BooHeeFoodItem item) {
         food.setName(item.getName());

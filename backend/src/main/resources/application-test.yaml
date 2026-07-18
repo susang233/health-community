@@ -86,3 +86,9 @@ springdoc:
 
 jwt:
   secret: testSecretKeyForLocalTesting1234567890
+
+# 测试/CI 可不配薄荷密钥；未配置时 FoodService 仅查 ES，不调三方
+boohee:
+  api:
+    app-id: ${BOOHEE_APP_ID:}
+    app-key: ${BOOHEE_APP_KEY:}

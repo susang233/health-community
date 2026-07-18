@@ -16,6 +16,23 @@ steps:
     extract:
       token: body.data.token
 
+  - name: 完善健康档案（饮食概要依赖推荐热量）
+    request:
+      method: POST
+      url: /user/health/profile
+      headers:
+        Authorization: Bearer ${token}
+      json:
+        gender: FEMALE
+        height: 165
+        birthday: "1998-05-20"
+        activityLevel: LIGHT
+        currentWeight: 55.0
+        targetWeight: 52.0
+    validate:
+      - eq: [status_code, 200]
+      - eq: [body.code, 200]
+
   - name: 获取今日饮食概要
     request:
       method: GET
