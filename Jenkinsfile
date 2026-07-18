@@ -168,10 +168,11 @@ pipeline {
           cd auto_test
           . .venv/bin/activate
 
-          if [ -f .env ]; then
+          # dash/sh: `. .env` 会去 PATH 找文件；必须写成 `./.env`
+          if [ -f ./.env ]; then
             set -a
             # shellcheck disable=SC1091
-            . .env
+            . ./.env
             set +a
           fi
 

@@ -73,6 +73,13 @@ pip install -r tests/requirements.txt
 
 echo "[5/5] Run integration with xdist + allure"
 export TEST_ENV="${TEST_ENV:-test}"
+# dash/sh: must use ./.env (with slash), not .env
+if [ -f ./.env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . ./.env
+  set +a
+fi
 python run.py --integration --allure -- ${PYTEST_XDIST:--n auto}
 
 echo "Done. Allure results in auto_test/reports/allure-results"
